@@ -1,0 +1,4 @@
+black; python_version >= '3.6'
+pre-commit
+flake8
+paho.mqtt>=1.5.1
