@@ -32,7 +32,9 @@ class SampleApp(object):
 
         auth = mqtt_edge_auth.MqttEdgeAuth.create_from_environment()
 
-        self._topic_helper = topics.IoTHubTopicHelper(auth.device_id, auth.module_id)
+        self._topic_helper = topics.IoTHubTopicHelper(
+            auth.device_id, auth.module_id
+        )
 
         self._mqtt_client = paho.mqtt.client.Client(auth.client_id)
         self._mqtt_client.username_pw_set(auth.username, auth.password)
@@ -76,12 +78,16 @@ class SampleApp(object):
             )
 
         else:
-            logger.info("sent telemetry to {} with MID {}".format(device_id, info.mid))
+            logger.info(
+                "sent telemetry to {} with MID {}".format(device_id, info.mid)
+            )
 
     def handle_on_publish(self, userdata: Any, mid: int) -> None:
         # callback for publish comlplete.
         logger.info(
-            "PUBACK received for telemetry sent to {} with MID {}".format(userdata, mid)
+            "PUBACK received for telemetry sent to {} with MID {}".format(
+                userdata, mid
+            )
         )
 
 

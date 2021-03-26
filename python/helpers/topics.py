@@ -3,7 +3,6 @@
 # license information.
 from typing import Union, Any, Dict, Callable
 from uuid import uuid4
-import mqtt_topic_iothub
 
 TopicFilter = Union[str, Callable[[str], bool]]
 IncomingMessageHandler = Callable[[str, object], None]
@@ -32,7 +31,9 @@ class IoTHubTopicHelper:
                 "If module_id is specified, it cannot be default_value or any_value"
             )
         if module_id and not device_id:
-            raise ValueError("if module_id is specified, device_id must be specified")
+            raise ValueError(
+                "if module_id is specified, device_id must be specified"
+            )
 
         self.default_device_id = device_id
         self.default_module_id = module_id
@@ -90,14 +91,19 @@ class IoTHubTopicHelper:
         """
         assert False
 
-    def is_topic_for_device(self, topic: str, device_id: str = default_value) -> bool:
+    def is_topic_for_device(
+        self, topic: str, device_id: str = default_value
+    ) -> bool:
         """
         returns True if the given topic is intended for the given device
         """
         assert False
 
     def is_topic_for_module(
-        self, topic: str, device_id: str = default_value, module_id: str = default_value
+        self,
+        topic: str,
+        device_id: str = default_value,
+        module_id: str = default_value,
     ) -> bool:
         """
         returns True if the givern topic is indended for the given device/module
