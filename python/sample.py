@@ -2,11 +2,10 @@ import json
 import logging
 import os
 import threading
-import topics
+import paho
+from helpers import topics, mqtt_edge_auth
 from ruuvitag_sensor.ruuvi import RuuviTagSensor
 from typing import Any
-import paho
-import mqtt_edge_auth
 
 # A map of sensors' MAC to device id.
 # All devices need to be pre-created in IoT Hub.
