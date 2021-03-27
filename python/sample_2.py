@@ -32,8 +32,12 @@ class SampleApp(object):
         self._connected = threading.Event()
 
     def handle_on_connect(self, userdata: Any, flags: Any, rc: int) -> None:
-        logger.info("handle_on_connect called with rc={}".format(rc))
-        if rc == 0:
+        logger.info(
+            "handle_on_connect called with rc={} ({})".format(
+                rc, paho.mqtt.client.connack_string(rc)
+            )
+        )
+        if rc == paho.mqtt.client.MQTT_ERR_SUCCESS:
             self._connected.set()
 
     def main(self) -> None:

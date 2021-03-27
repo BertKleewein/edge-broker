@@ -9,7 +9,7 @@ import time
 from helpers import mqtt_edge_auth
 from typing import Any
 
-# SAMPLE 1
+# SAMPLE 3
 #
 # Demonstrates how to handle token renewal with IoT Edge connetions.
 # Can also be applied to connections based on symmetric key and connection string.
