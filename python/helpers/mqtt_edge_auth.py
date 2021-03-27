@@ -8,7 +8,7 @@ from typing import Any
 
 class MqttEdgeAuth(object):
     def __init__(self) -> None:
-        self.expiry: datetime.datetime = None
+        self.token_expiry: datetime.datetime = None
         self.client_id: str = None
         self.username: str = None
         self.password: str = None
@@ -20,13 +20,15 @@ class MqttEdgeAuth(object):
         self.port: int = 8883
 
     @classmethod
-    def create_from_environment(cls) -> Any:
+    def create_from_environment(
+        cls, token_reneal_interval: int = 3600, token_renewal_margin: int = 300
+    ) -> Any:
         """
         create a new Edge auth object from the environment.
         """
         pass
 
-    def renew(self) -> None:
+    def renew_token(self) -> None:
         """
         Renew authorization. This casuses a new password string to be generated.
         """
