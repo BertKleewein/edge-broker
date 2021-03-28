@@ -53,7 +53,7 @@ class SampleApp(object):
         self._mqtt_client.username_pw_set(
             self._auth.username, self._auth.password
         )
-        self._mqtt_client.tls_set_context(self._auth.tls_context)
+        self._mqtt_client.tls_set_context(self._auth.create_tls_context())
         self._mqtt_client.on_connect = self.handle_on_connect
 
         logger.info("Connecting")

@@ -47,7 +47,7 @@ class SampleApp(object):
         )
         # In this sample, we use the TLS context that the auth object builds for
         # us.  We could also build our own from the contents of the auth object
-        self._mqtt_client.tls_set_context(self._auth.tls_context)
+        self._mqtt_client.tls_set_context(self._auth.create_tls_context())
 
         # set a handler to get called when we're connected.
         self._mqtt_client.on_connect = self.handle_on_connect
