@@ -3,39 +3,50 @@
 # license information.
 from typing import Union, Any, Dict, Callable
 from uuid import uuid4
-import mqtt_topic_iothub
 
 TopicFilter = Union[str, Callable[[str], bool]]
 IncomingMessageHandler = Callable[[str, object], None]
 TopicProperties = Dict[str, str]
 CompletionCallback = Callable[[Exception, Union[Any, None]], None]
 
-default_value: str = str(uuid4())
-any_value: str = str(uuid4())
+use_default_value: str = str(uuid4())
+match_any_value: str = str(uuid4())
 
 
 class IoTHubTopicHelper:
-    def __init__(self, device_id: str = None, module_id: str = None):
+    def __init__(
+        self, default_device_id: str = None, default_module_id: str = None
+    ):
         """
-        set default values.
-        if self.module_id == None, that means our default is a device with no module
-        if self.device_id == None, that means we don't have a default.
-        Calling APIs to build/parse topics without a module_id assumes it's a device
-        Calling APIs to build/parse topics without a device_id causes an exception if the device_id is required.
-        """
-        if device_id == default_value or device_id == any_value:
-            raise ValueError(
-                "If device_id is specified, it cannot be default_value or any_value"
-            )
-        if module_id == default_value or module_id == any_value:
-            raise ValueError(
-                "If module_id is specified, it cannot be default_value or any_value"
-            )
-        if module_id and not device_id:
-            raise ValueError("if module_id is specified, device_id must be specified")
+        Create a topic helper, with an optional default identity.
 
-        self.default_device_id = device_id
-        self.default_module_id = module_id
+        if default_module_id == None, that means our default is a device with no module
+        if default_device_id == None, that means we don't have a default.
+        Calling APIs to build/parse topics without a module_id assumes it's a device
+        Calling APIs to build/parse topics without a device_id causes an exception if the
+            device_id is required.
+        """
+        if (
+            default_device_id == use_default_value
+            or default_device_id == match_any_value
+        ):
+            raise ValueError(
+                "device_id cannot be use_default_value or match_any_value"
+            )
+        if (
+            default_module_id == use_default_value
+            or default_module_id == match_any_value
+        ):
+            raise ValueError(
+                "module_id cannot be use_default_value or match_any_value"
+            )
+        if default_module_id and not default_device_id:
+            raise ValueError(
+                "if module_id is specified, device_id must be specified"
+            )
+
+        self.default_device_id = default_device_id
+        self.default_module_id = default_module_id
 
     def get_device_id_to_use_for_publish(self, device_id: str) -> str:
         """
@@ -43,7 +54,7 @@ class IoTHubTopicHelper:
         use the default.  Either way, device_id is required.
         """
         id_to_use = device_id
-        if id_to_use == default_value:
+        if id_to_use == use_default_value:
             id_to_use = self.default_device_id
 
         if not id_to_use:
@@ -56,7 +67,7 @@ class IoTHubTopicHelper:
         use the default.  module_id is not required
         """
         id_to_use = module_id
-        if id_to_use == default_value:
+        if id_to_use == use_default_value:
             id_to_use = self.default_module_id
 
         return id_to_use
@@ -90,14 +101,19 @@ class IoTHubTopicHelper:
         """
         assert False
 
-    def is_topic_for_device(self, topic: str, device_id: str = default_value) -> bool:
+    def is_topic_for_device(
+        self, topic: str, device_id: str = use_default_value
+    ) -> bool:
         """
         returns True if the given topic is intended for the given device
         """
         assert False
 
     def is_topic_for_module(
-        self, topic: str, device_id: str = default_value, module_id: str = default_value
+        self,
+        topic: str,
+        device_id: str = use_default_value,
+        module_id: str = use_default_value,
     ) -> bool:
         """
         returns True if the givern topic is indended for the given device/module
@@ -114,8 +130,8 @@ class IoTHubTopicHelper:
     # Telemetry
     def get_telemetry_topic_for_publish(
         self,
-        device_id: str = default_value,
-        module_id: str = default_value,
+        device_id: str = use_default_value,
+        module_id: str = use_default_value,
         properties: TopicProperties = None,
     ) -> str:
         """
@@ -135,12 +151,17 @@ class IoTHubTopicHelper:
         assert False
 
     def is_c2d_topic(
-        self, topic: str, device_id: str = any_value, module_id: str = any_value
+        self,
+        topic: str,
+        device_id: str = match_any_value,
+        module_id: str = match_any_value,
     ) -> bool:
         """
         Return True if the given topic is C2D.
-        If device_id and module_id == default_value, it only returns True if the C2D is targeted at the default.
-        If device_id and module_id == any_value, it returns True if the C2D is targeted at any destinations.
+        If device_id and module_id == use_default_value, it only returns True if the C2D is targeted
+            at the default.
+        If device_id and module_id == match_any_value, it returns True if the C2D is targeted at
+            any destinations.
         """
         assert False
 
@@ -159,10 +180,10 @@ class IoTHubTopicHelper:
 
     def is_twin_response_topic(
         self,
-        device_id: str = any_value,
-        module_id: str = any_value,
-        request_id: str = any_value,
-        request_topic: str = any_value,
+        device_id: str = match_any_value,
+        module_id: str = match_any_value,
+        request_id: str = match_any_value,
+        request_topic: str = match_any_value,
     ) -> bool:
         """
         Return True if the given topic is a twin response for the given parameters.
@@ -173,7 +194,7 @@ class IoTHubTopicHelper:
         assert False
 
     def is_twin_patch_topic(
-        self, device_id: str = any_value, module_id: str = any_value
+        self, device_id: str = match_any_value, module_id: str = match_any_value
     ) -> bool:
         """
         return True if the given topic is a twin patch topic
@@ -184,8 +205,8 @@ class IoTHubTopicHelper:
         self,
         verb: str,
         resource: str,
-        device_id: str = default_value,
-        module_id: str = default_value,
+        device_id: str = use_default_value,
+        module_id: str = use_default_value,
         properties: TopicProperties = None,
     ) -> str:
         """
@@ -196,8 +217,8 @@ class IoTHubTopicHelper:
 
     def get_twin_onetime_fetch_topic_for_publish(
         self,
-        device_id: str = default_value,
-        module_id: str = default_value,
+        device_id: str = use_default_value,
+        module_id: str = use_default_value,
         properties: TopicProperties = None,
     ) -> str:
         """
@@ -207,7 +228,9 @@ class IoTHubTopicHelper:
         assert False
 
     def get_twin_onetime_patch_reported_topic_for_publish(
-        self, device_id: str = default_value, module_id: str = default_value
+        self,
+        device_id: str = use_default_value,
+        module_id: str = use_default_value,
     ) -> str:
         """
         Get a publish topic for a twin 'patch' operation.
@@ -223,12 +246,12 @@ class IoTHubTopicHelper:
 
     def is_method_request_topic(
         self,
-        device_id: str = any_value,
-        module_id: str = any_value,
-        method_name: str = any_value,
+        device_id: str = match_any_value,
+        module_id: str = match_any_value,
+        method_name: str = match_any_value,
     ) -> bool:
         """
-        Return true if teh given topic isa  method request for the given parameters
+        Return true if the given topic isa  method request for the given parameters
         """
         assert False
 
