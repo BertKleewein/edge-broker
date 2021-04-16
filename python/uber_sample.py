@@ -3,23 +3,20 @@
 # license information.
 import logging
 import threading
-import time
 import os
-from helpers import constants
+import sys
+import time
 from paho.mqtt import client as mqtt
-from helpers import SymmetricKeyAuth
-from typing import Any
+from helpers import SymmetricKeyAuth, IoTHubTopicHelper, Message
+from typing import Any, List
 
 # SAMPLE 1
 #
-# Demonstrates how to connect to IoT Edge as a module and disconnect again.
+# Demonstrates how to send telemetry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Do this to make testing easier.  Don't use these numbers in real life, no no no
-constants.DEFAULT_TOKEN_RENEWAL_INTERVAL = 300
-constants.DEFAULT_TOKEN_RENEWAL_MARGIN = 30
+logging.getLogger("paho").setLevel(level=logging.DEBUG)
 
 
 class SampleApp(object):
@@ -27,6 +24,7 @@ class SampleApp(object):
         self.mqtt_client: mqtt.Client = None
         self.auth: SymmetricKeyAuth = None
         self.connected = threading.Event()
+        self.topic_helper: IoTHubTopicHelper = None
 
     def handle_on_connect(
         self, mqtt_client: mqtt.Client, userdata: Any, flags: Any, rc: int
@@ -62,6 +60,56 @@ class SampleApp(object):
 
         self.auth.set_sas_token_renewal_timer(self.handle_sas_token_renewed)
 
+    def remove_completed_messages(
+        self, messages: List[mqtt.MQTTMessageInfo]
+    ) -> List[mqtt.MQTTMessageInfo]:
+        return [x for x in messages if not x.is_published()]
+
+    def send_telemetry(self) -> None:
+        messages_to_send = 300
+        outstanding_messages = []
+        start = time.time()
+        for i in range(0, messages_to_send):
+            logger.info("Sending telemetry {}".format(i))
+            payload = {
+                "index": i,
+                "text": "Hello from sample_4.  This is message # {}".format(i),
+            }
+            msg = Message(payload)
+
+            telemetry_topic = self.topic_helper.telemetry.get_telemetry_topic_for_publish(
+                properties=msg.properties
+            )
+            mi = self.mqtt_client.publish(
+                telemetry_topic, msg.get_binary_payload(), qos=1
+            )
+
+            outstanding_messages.append(mi)
+            outstanding_messages = self.remove_completed_messages(
+                outstanding_messages
+            )
+
+            print(
+                "{} sent, {} awaiting PUBACK".format(
+                    i + 1, len(outstanding_messages)
+                )
+            )
+
+        while len(outstanding_messages):
+            print("Waiting for {} messages".format(len(outstanding_messages)))
+            outstanding_messages[0].wait_for_publish()
+            outstanding_messages = self.remove_completed_messages(
+                outstanding_messages
+            )
+        end = time.time()
+
+        print("Done sending telemetry.")
+        print(
+            "{} messages sent in {} seconds.  {} messages per second".format(
+                messages_to_send, end - start, messages_to_send / (end - start)
+            )
+        )
+
     def main(self) -> None:
         logger.info("Azure IoT Edge Protocol Translation Module (PTM) Sample")
 
@@ -75,7 +123,11 @@ class SampleApp(object):
         # Create an MQTT client object, passing in the credentials we
         # get from the auth object
         self.mqtt_client = mqtt.Client(self.auth.client_id)
+        self.mqtt_client.enable_logger()
         self.mqtt_client.username_pw_set(self.auth.username, self.auth.password)
+        self.topic_helper = IoTHubTopicHelper(
+            self.auth.device_id, self.auth.module_id
+        )
         # In this sample, we use the TLS context that the auth object builds for
         # us.  We could also build our own from the contents of the auth object
         self.mqtt_client.tls_set_context(self.auth.create_tls_context())
@@ -94,17 +146,11 @@ class SampleApp(object):
         # wait for the connectoin, but don't wait too long
         if not self.connected.wait(timeout=20):
             logger.error("Failed to connect.")
+            sys.exit(1)
 
-        else:
+        self.send_telemetry()
 
-            # if `self.connected` was set, we know that we're connected.
-            # sleep for a litle while, then disconnect.
-            logger.info("sleeping...")
-            time.sleep(3600)
-            logger.info("Disconecting")
-            self.mqtt_client.disconnect()
-            # `disconnect` is more immediate than `connect`.  We know
-            # that we're disconnected at this point.
+        self.mqtt_client.disconnect()
 
         logger.info("Exiting.")
 

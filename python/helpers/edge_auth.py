@@ -1,51 +1,47 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
-import datetime
+import os
+from . import base_auth, edge_workload_api, sas_token
+from typing import Any
 
 
-class MqttEdgeAuth(object):
+class EdgeAuth(base_auth.RenewableTokenAuthorizationBase):
     def __init__(self) -> None:
-        pass
+        super(EdgeAuth, self).__init__()
 
-    def renew(self) -> None:
-        """
-        Renew authorization. This casuses a new password string to be generated.
-        """
-        pass
+        self.hostname: str = os.environ["IOTEDGE_IOTHUBHOSTNAME"]
+        self.device_id: str = os.environ["IOTEDGE_DEVICEID"]
+        self.module_id: str = os.environ["IOTEDGE_MODULEID"]
+        self.module_generation_id: str = os.environ[
+            "IOTEDGE_MODULEGENERATIONID"
+        ]
+        self.workload_uri: str = os.environ["IOTEDGE_WORKLOADURI"]
+        self.api_version: str = os.environ["IOTEDGE_APIVERSION"]
 
-    def get_expiry(self) -> datetime.datetime:
-        """
-        Get a datetime.datetime value for the expiry of the current credentials.
-        """
-        pass
+        self.workload_api = edge_workload_api.EdgeWorkloadApi(
+            module_id=self.module_id,
+            generation_id=self.module_generation_id,
+            workload_uri=self.workload_uri,
+            api_version=self.api_version,
+        )
 
-    def get_client_id(self) -> str:
+    @classmethod
+    def create_from_environment(cls) -> Any:
         """
-        Get the client_id value used for creating the MQTT session
-        """
-        pass
+        create a new Edge auth object from the environment.
 
-    def get_username(self) -> str:
+        :returns: MqttEdgeAuth object created by this function.
         """
-        Get the username to pass into the MQTT CONNECT packet
-        """
-        pass
+        obj = EdgeAuth()
+        obj._initialize()
+        return obj
 
-    def gat_password(self) -> str:
-        """
-        Get the password to pass into the MQTT CONNECT passoed
-        """
-        pass
+    def _initialize(self) -> None:
+        self.server_verification_cert = self.workload_api.get_certificate()
 
-    def get_hostname(self) -> str:
-        """
-        Get the hostname to connect the MQTT transport to
-        """
-        pass
+        self.sas_token = sas_token.RenewableSasToken(
+            uri=self.sas_uri, signing_function=self.workload_api.sign
+        )
 
-    def get_server_verification_cert(self) -> str:
-        """
-        Get the verification cert used to verify the TLS connection that the MQTT transport uses
-        """
-        pass
+        self.sas_token.refresh()
