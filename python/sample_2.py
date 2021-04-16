@@ -5,8 +5,8 @@ import json
 import logging
 import os
 import threading
-import paho
-from helpers import topics, mqtt_edge_auth
+from paho.mqtt import client as mqtt
+from helpers import EdgeAuth, IoTHubTopicHelper
 from ruuvitag_sensor.ruuvi import RuuviTagSensor
 from typing import Any
 
@@ -26,30 +26,30 @@ logger = logging.getLogger(__name__)
 
 class SampleApp(object):
     def __init__(self) -> None:
-        self._mqtt_client: paho.mqtt.client.Client = None
-        self._topic_helper: topics.IoTHubTopicHelper = None
-        self._auth: mqtt_edge_auth.MqttEdgeAuth = None
+        self._mqtt_client: mqtt.Client = None
+        self._topic_helper: IoTHubTopicHelper = None
+        self._auth: EdgeAuth = None
         self._connected = threading.Event()
 
     def handle_on_connect(self, userdata: Any, flags: Any, rc: int) -> None:
         logger.info(
             "handle_on_connect called with rc={} ({})".format(
-                rc, paho.mqtt.client.connack_string(rc)
+                rc, mqtt.connack_string(rc)
             )
         )
-        if rc == paho.mqtt.client.MQTT_ERR_SUCCESS:
+        if rc == mqtt.MQTT_ERR_SUCCESS:
             self._connected.set()
 
     def main(self) -> None:
         logger.info("Azure IoT Edge Protocol Translation Module (PTM) Sample")
 
-        self._auth = mqtt_edge_auth.MqttEdgeAuth.create_from_environment()
+        self._auth = EdgeAuth.create_from_environment()
 
-        self._topic_helper = topics.IoTHubTopicHelper(
+        self._topic_helper = IoTHubTopicHelper(
             self._auth.device_id, self._auth.module_id
         )
 
-        self._mqtt_client = paho.mqtt.client.Client(self._auth.client_id)
+        self._mqtt_client = mqtt.Client(self._auth.client_id)
         self._mqtt_client.username_pw_set(
             self._auth.username, self._auth.password
         )
@@ -81,7 +81,9 @@ class SampleApp(object):
         device_id = authorized_devices.get(mac, None)
 
         # Get the telemetry topic for this device
-        topic = self._topic_helper.get_telemetry_topic_for_publish(device_id)
+        topic = self._topic_helper.telemetry.get_telemetry_topic_for_publish(
+            device_id
+        )
 
         # publish.  Use QOS 1 to guarantee that the message was received by the service
         # at least once.
@@ -94,7 +96,7 @@ class SampleApp(object):
         if info.rc:
             logger.info(
                 "sending telemetry to {} failed with error: '{}'".format(
-                    device_id, paho.mqtt.client.error_string(info.rc)
+                    device_id, mqtt.error_string(info.rc)
                 )
             )
 

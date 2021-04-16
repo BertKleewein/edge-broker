@@ -13,7 +13,7 @@ use_default_value: str = str(uuid4())
 match_any_value: str = str(uuid4())
 
 
-class IoTHubTopicHelper:
+class BaseTopicHelper(object):
     def __init__(
         self, default_device_id: str = None, default_module_id: str = None
     ):
@@ -50,7 +50,7 @@ class IoTHubTopicHelper:
 
     def get_device_id_to_use_for_publish(self, device_id: str) -> str:
         """
-        Get device_id used for publiushing.  If one is provided, use it.  If not,
+        Get device_id used for publishing.  If one is provided, use it.  If not,
         use the default.  Either way, device_id is required.
         """
         id_to_use = device_id
@@ -71,6 +71,25 @@ class IoTHubTopicHelper:
             id_to_use = self.default_module_id
 
         return id_to_use
+
+    def _get_topic_base(self, device_id: str, module_id: str = None) -> str:
+        """
+        return the string that is at the beginning of all topics for this
+        device/module
+        """
+        # TODO: rewrite for new API
+        # TODO: copy comments from mqtt_topic_iothub.py as appropriate
+
+        # NOTE: Neither Device ID nor Module ID should be URL encoded in a topic string.
+        # See the repo wiki article for details:
+        # https://github.com/Azure/azure-iot-sdk-python/wiki/URL-Encoding-(MQTT)
+        device_id = self.get_device_id_to_use_for_publish(device_id)
+        module_id = self.get_module_id_to_use_for_publish(module_id)
+
+        topic = "devices/" + str(device_id)
+        if module_id:
+            topic = topic + "/modules/" + str(module_id)
+        return topic
 
     # Generic extraction routines
     def extract_request_id(self, topic: str) -> str:
@@ -120,13 +139,10 @@ class IoTHubTopicHelper:
         """
         assert False
 
-    def extract_method_name(self, topic: str) -> str:
-        """
-        Extract the method_name from the topic.
-        Raises an ValueError if there is no method_name in the topic
-        """
-        assert False
+    pass
 
+
+class TelemetryTopicHelper(BaseTopicHelper):
     # Telemetry
     def get_telemetry_topic_for_publish(
         self,
@@ -139,16 +155,29 @@ class IoTHubTopicHelper:
 
         When publishing, we can specify device_id/module_id or we can use the defaults.
         """
-        assert False
+        # TODO: add properties to topic
+        assert not properties
+        return self._get_topic_base(device_id, module_id) + "/messages/events/"
 
+
+class C2dTopicHelper(BaseTopicHelper):
     # C2D
-    def get_c2d_topic_for_subscribe(self) -> str:
+    def get_c2d_topic_for_subscribe(
+        self,
+        device_id: str = use_default_value,
+        module_id: str = use_default_value,
+    ) -> str:
         """
         Return the topic we need to subscribe to for C2d.
 
         For subscribes, we always subscribe for all devices/modules
         """
-        assert False
+        # TODO: do we always subscribe for all devices/modules
+
+        return (
+            self._get_topic_base(device_id, module_id)
+            + "/messages/devicebound/#"
+        )
 
     def is_c2d_topic(
         self,
@@ -163,8 +192,14 @@ class IoTHubTopicHelper:
         If device_id and module_id == match_any_value, it returns True if the C2D is targeted at
             any destinations.
         """
-        assert False
+        # TODO: write topic_matches function
+        return topic.startswith(
+            self._get_topic_base(device_id, module_id)
+            + "/messages/devicebound/"
+        )
 
+
+class TwinTopicHelper(BaseTopicHelper):
     # Twin
     def get_twin_response_topic_for_subscribe(self) -> str:
         """
@@ -237,6 +272,15 @@ class IoTHubTopicHelper:
         This is a onetime topic because it contains an $rid value and can only be used for one twin operation
         """
 
+
+class MethodTopicHelper(BaseTopicHelper):
+    def extract_method_name(self, topic: str) -> str:
+        """
+        Extract the method_name from the topic.
+        Raises an ValueError if there is no method_name in the topic
+        """
+        assert False
+
     # Methods
     def get_method_received_topic_for_subscribe(self) -> str:
         """
@@ -262,3 +306,18 @@ class IoTHubTopicHelper:
         Return a method response topic for the given method request topic and result code.
         """
         assert False
+
+
+class IoTHubTopicHelper(BaseTopicHelper):
+    def __init__(
+        self, default_device_id: str = None, default_module_id: str = None
+    ):
+        super(IoTHubTopicHelper, self).__init__(
+            default_device_id, default_module_id
+        )
+        self.telemetry = TelemetryTopicHelper(
+            default_device_id, default_module_id
+        )
+        self.c2d = C2dTopicHelper(default_device_id, default_module_id)
+        self.twin = TwinTopicHelper(default_device_id, default_module_id)
+        self.methods = MethodTopicHelper(default_device_id, default_module_id)
