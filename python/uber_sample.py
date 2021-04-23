@@ -6,9 +6,16 @@ import threading
 import os
 import sys
 import time
+import json
 from paho.mqtt import client as mqtt
-from helpers import SymmetricKeyAuth, IoTHubTopicHelper, Message
-from typing import Any, List
+from helpers import (
+    SymmetricKeyAuth,
+    Message,
+    IncomingMessageList,
+    WaitableDict,
+    topic_builder,
+)
+from typing import Any, List, Tuple, Union, Dict
 
 # SAMPLE 1
 #
@@ -24,7 +31,8 @@ class SampleApp(object):
         self.mqtt_client: mqtt.Client = None
         self.auth: SymmetricKeyAuth = None
         self.connected = threading.Event()
-        self.topic_helper: IoTHubTopicHelper = None
+        self.incoming_subacks: WaitableDict[int, int] = WaitableDict()
+        self.incoming_messages = IncomingMessageList()
 
     def handle_on_connect(
         self, mqtt_client: mqtt.Client, userdata: Any, flags: Any, rc: int
@@ -60,13 +68,44 @@ class SampleApp(object):
 
         self.auth.set_sas_token_renewal_timer(self.handle_sas_token_renewed)
 
+    def handle_on_subscribe(
+        self,
+        client: mqtt.Client,
+        userdata: Any,
+        mid: int,
+        granted_qos: int,
+        properties: Any = None,
+    ) -> None:
+        # we're inside a Paho thread here.
+        # Save the results and return as quickly as possible
+        logger.info("Received SUBACK for mid {}".format(mid))
+        self.incoming_subacks.add_item(mid, granted_qos)
+
+    def subscribe(
+        self, topic: Union[str, List[Tuple[Any, int]]], qos: int = 0
+    ) -> None:
+        (rc, mid) = self.mqtt_client.subscribe(topic, qos)
+        if rc:
+            raise Exception("subscribe RC = {}".format(rc))
+        print("send SUBSCRIBE for mid {}".format(mid))
+        self.incoming_subacks.get_next_item(mid, timeout=10)
+        print("SUBACK received for mid {}".format(mid))
+
+    def handle_on_message(
+        self, mqtt_client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
+    ) -> None:
+        # we're inside a Paho thread here.
+        # Save the message and return as quickly as possible
+        print("received message on {}".format(message.topic))
+        self.incoming_messages.add_item(message)
+
     def remove_completed_messages(
         self, messages: List[mqtt.MQTTMessageInfo]
     ) -> List[mqtt.MQTTMessageInfo]:
         return [x for x in messages if not x.is_published()]
 
     def send_telemetry(self) -> None:
-        messages_to_send = 300
+        messages_to_send = 20
         outstanding_messages = []
         start = time.time()
         for i in range(0, messages_to_send):
@@ -77,8 +116,8 @@ class SampleApp(object):
             }
             msg = Message(payload)
 
-            telemetry_topic = self.topic_helper.telemetry.get_telemetry_topic_for_publish(
-                properties=msg.properties
+            telemetry_topic = topic_builder.build_telemetry_publish_topic(
+                self.auth.device_id, self.auth.module_id, msg.properties
             )
             mi = self.mqtt_client.publish(
                 telemetry_topic, msg.get_binary_payload(), qos=1
@@ -110,6 +149,68 @@ class SampleApp(object):
             )
         )
 
+    def subscribe_all(self) -> None:
+        topics = [
+            (
+                topic_builder.build_twin_response_subscribe_topic(
+                    self.auth.device_id, self.auth.module_id
+                ),
+                1,
+            ),
+            (
+                topic_builder.build_twin_patch_desired_subscribe_topic(
+                    self.auth.device_id, self.auth.module_id
+                ),
+                1,
+            ),
+            (
+                topic_builder.build_method_request_subscribe_topic(
+                    self.auth.device_id, self.auth.module_id
+                ),
+                1,
+            ),
+            (
+                topic_builder.build_c2d_subscribe_topic(
+                    self.auth.device_id, self.auth.module_id
+                ),
+                1,
+            ),
+        ]
+        self.subscribe(topics)
+
+    def get_twin(self) -> Dict[str, Any]:
+        topic = topic_builder.build_twin_get_publish_topic(
+            self.auth.device_id, self.auth.module_id
+        )
+        self.mqtt_client.publish(topic, qos=1)
+        # todo wait on mi
+
+        twin = self.incoming_messages.pop_next_twin_response(
+            request_topic=topic, timeout=10
+        )
+        if twin:
+            twin = json.loads(twin.payload)
+            print("Got twin = {}".format(twin))
+            return twin  # type: ignore
+        else:
+            print("Error getting twin.")
+            return None
+
+    def patch_reported_properties(self, value: str) -> None:
+        patch = {"testObject": {"testValue": value}}
+        topic = topic_builder.build_twin_patch_reported_publish_topic(
+            self.auth.device_id, self.auth.module_id
+        )
+        # todo: easier way to test connection being forced closed: send invalid patch
+        self.mqtt_client.publish(topic, json.dumps(patch), qos=1)
+        # todo wait on mi
+
+        patch_result = self.incoming_messages.pop_next_twin_response(
+            request_topic=topic, timeout=10
+        )
+        # TODO: raise exception on error
+        print("patch_result = {}".format(patch_result))
+
     def main(self) -> None:
         logger.info("Azure IoT Edge Protocol Translation Module (PTM) Sample")
 
@@ -125,15 +226,14 @@ class SampleApp(object):
         self.mqtt_client = mqtt.Client(self.auth.client_id)
         self.mqtt_client.enable_logger()
         self.mqtt_client.username_pw_set(self.auth.username, self.auth.password)
-        self.topic_helper = IoTHubTopicHelper(
-            self.auth.device_id, self.auth.module_id
-        )
         # In this sample, we use the TLS context that the auth object builds for
         # us.  We could also build our own from the contents of the auth object
         self.mqtt_client.tls_set_context(self.auth.create_tls_context())
 
         # set a handler to get called when we're connected.
         self.mqtt_client.on_connect = self.handle_on_connect
+        self.mqtt_client.on_subscribe = self.handle_on_subscribe
+        self.mqtt_client.on_message = self.handle_on_message
 
         logger.info("Connecting")
         # Start the paho loop.
@@ -148,7 +248,25 @@ class SampleApp(object):
             logger.error("Failed to connect.")
             sys.exit(1)
 
+        self.subscribe_all()
         self.send_telemetry()
+        self.patch_reported_properties("shazam!")
+        self.get_twin()
+
+        start_time = time.time()
+        end_time = start_time + 600
+        while time.time() < end_time:
+            if self.incoming_messages.wait_for_message(end_time - time.time()):
+                c2d = self.incoming_messages.pop_next_c2d(timeout=0)
+                if c2d:
+                    print("C2d: {}".format(c2d.payload))  # type: ignore
+                undefined = self.incoming_messages.pop_next_message(timeout=0)
+                if undefined:
+                    print(
+                        "Undefined: {}, {}".format(  # type: ignore
+                            undefined.topic, undefined.payload
+                        )
+                    )
 
         self.mqtt_client.disconnect()
 
