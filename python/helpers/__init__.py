@@ -2,26 +2,21 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 
-from .topic_helpers import (
-    TelemetryTopicHelper,
-    C2dTopicHelper,
-    TwinTopicHelper,
-    MethodTopicHelper,
-    IoTHubTopicHelper,
-)
 from .edge_auth import EdgeAuth
 from .symmetric_key_auth import SymmetricKeyAuth
 from .message import Message
 from . import constants
+from .waitable import WaitableDict
+from .incoming_message_list import IncomingMessageList
+from . import topic_matcher, topic_builder
 
 __all__ = [
-    "TelemetryTopicHelper",
-    "C2dTopicHelper",
-    "TwinTopicHelper",
-    "MethodTopicHelper",
-    "IoTHubTopicHelper",
     "EdgeAuth",
     "SymmetricKeyAuth",
     "constants",
     "Message",
+    "topic_matcher",
+    "topic_builder",
+    "WaitableDict",
+    "IncomingMessageList",
 ]
