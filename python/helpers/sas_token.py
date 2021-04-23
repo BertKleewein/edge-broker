@@ -6,7 +6,7 @@
 """This module contains tools for working with Shared Access Signature (SAS) Tokens"""
 
 import time
-import urllib
+import six.moves.urllib as urllib
 from typing import Dict, Callable
 from . import constants
 
@@ -72,7 +72,7 @@ class RenewableSasToken(object):
 
         :returns: String representation of the token
         """
-        url_encoded_uri = urllib.parse.quote(self._uri, safe="")  # type: ignore
+        url_encoded_uri = urllib.parse.quote(self._uri, safe="")
         message = url_encoded_uri + "\n" + str(self.expiry_time)
         try:
             signature = self._signing_function(message)
@@ -80,9 +80,7 @@ class RenewableSasToken(object):
             # Because of variant signing mechanisms, we don't know what error might be raised.
             # So we catch all of them.
             raise ValueError("Unable to build SasToken from given values", e)
-        url_encoded_signature = urllib.parse.quote(  # type: ignore
-            signature, safe=""
-        )
+        url_encoded_signature = urllib.parse.quote(signature, safe="")
         if self._key_name:
             token = self._auth_rule_token_format.format(
                 resource=url_encoded_uri,

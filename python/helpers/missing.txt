@@ -1,0 +1,23 @@
+still needs to be done:
+* lotsa comments
+* new topic format
+* new list of properties and formating thereof
+* status code mapping for twin ops
+* inputs and outputs (trivial if we have the schema)
+* digital twin helpers
+* correct api version
+* user agent string
+* !! code walkthrough.
+* sample for identity translation
+* translation into node
+
+not gonna do:
+* x509 auth helper
+* DPS helpers
+* async helpers
+* Paho helpers
+* async workload API interface
+* better workload API interface
+* reconnect/retry helpers (probably tied to Paho helpers)
+* plans for track 2 or iothub broker
+
