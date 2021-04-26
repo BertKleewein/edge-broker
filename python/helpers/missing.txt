@@ -1,23 +1,26 @@
 still needs to be done:
-* lotsa comments
-* new topic format
-* new list of properties and formating thereof
+* testing of new topic format
+* add telemetry properties
+* addition of content-type and content-encoding properties and ASC properties.
 * status code mapping for twin ops
-* inputs and outputs (trivial if we have the schema)
-* digital twin helpers
-* correct api version
-* user agent string
+* module inputs and outputs (trivial if we have the schema)
+* digital twin helpers.  I'm not sure of the scope here. 
+* use correct api version
+* add user agent strings
 * !! code walkthrough.
-* sample for identity translation
+* samples for identity translation
 * translation into node
+* distribution plans.  Use pypi/npm, curl-based distribution, or include the helpers with every sample (not recommended)
 
 not gonna do:
 * x509 auth helper
-* DPS helpers
-* async helpers
-* Paho helpers
+* DPS helpers for device/module registration
+* async helpers (waitable objects and some auth functionality)
+* Paho convenience layers, both callback-based and async.  
 * async workload API interface
-* better workload API interface
-* reconnect/retry helpers (probably tied to Paho helpers)
-* plans for track 2 or iothub broker
+* more complete workload API interface
+* Any significant failure handling, reconnect, and retry code in the samples.  
+* reconnect/retry helpers (probably tied to the Paho convenience layer(s))
+* plans for track 2 SDK and/or iothub broker
+* specific property maps (valid names and corret encoding for track 2 iothub mqtt)
 

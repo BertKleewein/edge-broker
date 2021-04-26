@@ -14,6 +14,7 @@ from helpers import (
     IncomingMessageList,
     WaitableDict,
     topic_builder,
+    topic_parser,
 )
 from typing import Any, List, Tuple, Union, Dict
 
@@ -176,6 +177,7 @@ class SampleApp(object):
                 1,
             ),
         ]
+        print("Subscribing to {}".format(topics))
         self.subscribe(topics)
 
     def get_twin(self) -> Dict[str, Any]:
@@ -257,14 +259,70 @@ class SampleApp(object):
         end_time = start_time + 600
         while time.time() < end_time:
             if self.incoming_messages.wait_for_message(end_time - time.time()):
+
                 c2d = self.incoming_messages.pop_next_c2d(timeout=0)
                 if c2d:
-                    print("C2d: {}".format(c2d.payload))  # type: ignore
+                    print("C2d: {}".format(str(c2d.payload)))
+
+                twin_patch = self.incoming_messages.pop_next_twin_patch_desired(
+                    timeout=0
+                )
+                if twin_patch:
+                    print("twin patch: {}".format(str(twin_patch.payload)))
+                    print(
+                        "twin version: {}".format(
+                            topic_parser.extract_twin_version(twin_patch.topic)
+                        )
+                    )
+
+                ping = self.incoming_messages.pop_next_method_request(
+                    method_name="ping", timeout=0
+                )
+                if ping:
+                    print("ping: {}".format(str(ping.payload)))
+                    response_topic = topic_builder.build_method_response_publish_topic(
+                        ping.topic, "200"
+                    )
+                    mi = self.mqtt_client.publish(
+                        topic=response_topic, payload=ping.payload, qos=1
+                    )
+                    mi.wait_for_publish()
+                    print("ping response sent")
+
+                fail = self.incoming_messages.pop_next_method_request(
+                    method_name="fail", timeout=0
+                )
+                if fail:
+                    print("fail: {}".format(str(fail.payload)))
+                    response_topic = topic_builder.build_method_response_publish_topic(
+                        fail.topic, "400"
+                    )
+                    mi = self.mqtt_client.publish(
+                        topic=response_topic, payload=fail.payload, qos=1
+                    )
+                    mi.wait_for_publish()
+                    print("fail response sent")
+
+                method_request = self.incoming_messages.pop_next_method_request(
+                    timeout=0
+                )
+                if method_request:
+                    print(
+                        "method request: {}".format(str(method_request.payload))
+                    )
+                    print(
+                        "method name: {}".format(
+                            topic_parser.extract_method_name(
+                                method_request.topic
+                            )
+                        )
+                    )
+
                 undefined = self.incoming_messages.pop_next_message(timeout=0)
                 if undefined:
                     print(
-                        "Undefined: {}, {}".format(  # type: ignore
-                            undefined.topic, undefined.payload
+                        "Undefined: {}, {}".format(
+                            undefined.topic, str(undefined.payload)
                         )
                     )
 

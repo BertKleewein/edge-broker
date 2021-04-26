@@ -43,10 +43,7 @@ class Message(object):
             return self.data
         elif isinstance(self.data, str):
             return self.data.encode("utf-8")
-        elif isinstance(self.data, dict):
+        elif isinstance(self.data, dict) or isinstance(self.data, list):
             return json.dumps(self.data).encode("utf-8")
-        elif isinstance(self.data, list):
-            # TODO serialize array
-            assert False
         else:
             assert False

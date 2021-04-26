@@ -29,7 +29,7 @@ class EdgeAuth(base_auth.RenewableTokenAuthorizationBase):
     @classmethod
     def create_from_environment(cls) -> Any:
         """
-        create a new Edge auth object from the environment.
+        create a new auth object from the Edge module's environment.
 
         :returns: MqttEdgeAuth object created by this function.
         """
@@ -38,6 +38,9 @@ class EdgeAuth(base_auth.RenewableTokenAuthorizationBase):
         return obj
 
     def _initialize(self) -> None:
+        """
+        Helper function to initialize a newly created auth object.
+        """
         self.server_verification_cert = self.workload_api.get_certificate()
 
         self.sas_token = sas_token.RenewableSasToken(
