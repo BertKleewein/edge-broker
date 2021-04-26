@@ -18,7 +18,7 @@ class SymmetricKeyAuth(base_auth.RenewableTokenAuthorizationBase):
     @classmethod
     def create_from_connection_string(cls, connection_string: str) -> Any:
         """
-        create a new Edge auth object from a command line.
+        create a new auth object from a connection string
 
         :param str connection_string: Connection string to create auth object for
         :param int token_renewal_interval: Number of seconds that SAS tokens created by
@@ -33,6 +33,9 @@ class SymmetricKeyAuth(base_auth.RenewableTokenAuthorizationBase):
         return obj
 
     def _initialize(self, connection_string: str) -> None:
+        """
+        Helper function to initialize a newly created auth object.
+        """
         conn_str = cs.ConnectionString(connection_string)
 
         self.hostname = conn_str[cs.HOST_NAME]

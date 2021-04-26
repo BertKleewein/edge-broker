@@ -18,6 +18,19 @@ sas_token_renewed_handler = Callable[[], None]
 
 
 def format_sas_uri(hostname: str, device_id: str, module_id: str) -> str:
+    """
+    Return the sas uri used to make a sas token for the given device or module.
+
+    :param str hostname: name of the host that is being authorized with.  In the case of
+        a transparent gateway, this is the name of the destination host, and NOT the name
+        of the gateway.
+    :param str device_id: device_id for the device or module which is being authorized.
+    :param str module_id: module_id for the module being authorized.  `None` if a device is being
+        authorized.
+
+    :return: The URI which gets signed to create the SAS token.
+    """
+
     if module_id:
         return "{}/devices/{}/modules/{}".format(hostname, device_id, module_id)
     else:
@@ -25,6 +38,11 @@ def format_sas_uri(hostname: str, device_id: str, module_id: str) -> str:
 
 
 class AuthorizationBase(abc.ABC):
+    """
+    Base object for all authorization and authentication mechanisms, including symmetric-key
+    and certificate-based auth.
+    """
+
     def __init__(self) -> None:
         self.hostname: str = None
         self.device_id: str = None
@@ -40,6 +58,9 @@ class AuthorizationBase(abc.ABC):
 
     @property
     def username(self) -> str:
+        """
+        Value to be sent in the MQTT `username` field.
+        """
         # TODO: add product_info stuff
         if self.module_id:
             return "{}/{}/{}/?api-version={}".format(
@@ -52,6 +73,9 @@ class AuthorizationBase(abc.ABC):
 
     @property
     def client_id(self) -> str:
+        """
+        Value to be sent in the MQTT `client_id` field.
+        """
         if self.module_id:
             return "{}/{}".format(self.device_id, self.module_id)
         else:
@@ -59,6 +83,13 @@ class AuthorizationBase(abc.ABC):
 
 
 class RenewableTokenAuthorizationBase(AuthorizationBase):
+    """
+    Base class for authentication/authorization which uses a SAS token
+    which needs to be refreshed on some periodic interval.  This base class does not
+    specify _how_ the token gets refreshed, but it does control the interval that
+    the token is valid and how frequently it needs to be refreshed.
+    """
+
     def __init__(self) -> None:
         super(RenewableTokenAuthorizationBase, self).__init__()
 
@@ -69,32 +100,56 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
 
     @property
     def password(self) -> str:
+        """
+        Value to be sent in the MQTT `password` field.
+        """
         return str(self.sas_token)
 
     @property
     def sas_uri(self) -> str:
+        """
+        The URI which is being signed to create the SAS token
+        """
         return format_sas_uri(self.hostname, self.device_id, self.module_id)
 
-    # TODO: rename token to sas_token in all method names
     @property
     def sas_token_expiry_time(self) -> int:
+        """
+        The Unix epoch time when the SAS token expires.
+        """
         return self.sas_token.expiry_time
 
     @property
     def sas_token_renewal_time(self) -> int:
+        """
+        The Unix epoch time when the SAS token should be renewed.  This is typically
+        some amount of time before the token expires.  That amount of time is known
+        as the "token renewal margin"
+        """
         return (
             self.sas_token.expiry_time - constants.DEFAULT_TOKEN_RENEWAL_MARGIN
         )
 
     @property
     def sas_token_ready_to_renew(self) -> bool:
+        """
+        True if the current token is "ready to renew", meaning the current time is
+        after the token's renewal time.
+        """
         return time.time() > self.sas_token_renewal_time
 
     @property
     def seconds_until_sas_token_renewal(self) -> int:
+        """
+        Nunmber of seconds before the current SAS token needs to be removed.
+        """
         return max(0, self.sas_token_renewal_time - int(time.time()))
 
     def cancel_sas_token_renewal_timer(self) -> None:
+        """
+        Cancel the running timer which is set to fire when the current SAS token
+        needs to be renewed.
+        """
         if self.sas_token_renewal_timer:
             self.sas_token_renewal_timer.cancel()
             self.sas_token_renewal_timer = None
@@ -102,6 +157,17 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
     def set_sas_token_renewal_timer(
         self, on_sas_token_renewed: sas_token_renewed_handler = None
     ) -> None:
+        """
+        Set a timer which renews the current SAS token before it expires and calls
+        the supplied handler after the renewal is complete.  The supplied handler
+        is responsible for re-authorizing using the new SAS token and setting up a new
+        timer by calling `set_sas_token_renewal_timer` again.
+
+        :param function on_sas_token_renewed: Handler function which gets called after
+            the token is renewed.  This function is responsible for calling
+            `set_sas_token_renewal_timer` in order to schedule subsequent renewals.
+        """
+
         # If there is an old renewal timer, cancel it
         self.cancel_sas_token_renewal_timer()
         self.on_sas_token_renewed = on_sas_token_renewed
@@ -136,7 +202,8 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
 
     def renew_sas_token(self) -> None:
         """
-        Renew authorization. This casuses a new password string to be generated.
+        Renew authorization. This casuses a new password string to be generated and the
+            `on_sas_token_renewed` function to be called.
         """
         logger.info("Renewing sas token and reconnecting")
 
@@ -154,7 +221,7 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
         """
         Create an SSLContext object based on this object.
 
-        :returns: SSLContext object
+        :returns: SSLContext object which can be used to secure the TLS connection.
         """
         ssl_context = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
         if self.server_verification_cert:

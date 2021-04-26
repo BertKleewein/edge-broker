@@ -13,6 +13,19 @@ match_predicate = Callable[[ValueType], bool]
 
 
 class WaitableDict(Generic[KeyType, ValueType]):
+    """
+    Dictionary-like object which supports the concept of "waiting" for a specific key to be
+    set.  This way, code that needs to wait for a specific PUBACK or SUBACK to be returned
+    can easily be written using `get_next_item` with a specific `key` value.
+
+    These "wait" operations are done in a thread-safe manner using the `Condition` class
+    provided by the `threading` module.
+
+    Callers using `asyncio` instead of `threading` should consider writing an awaitable version
+    of this class using the `asyncio.Condition` class for synchronization.  Submitting a pull
+    request with this functionality is encouraged.
+    """
+
     def __init__(self) -> None:
         self.cv = threading.Condition()
         self.lookup: Dict[KeyType, ValueType] = {}
