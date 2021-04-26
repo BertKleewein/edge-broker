@@ -2,9 +2,10 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 from uuid import uuid4
-from typing import Dict
+from typing import List, Tuple
+from datetime import datetime
 import six.moves.urllib as urllib
-from . import topic_parser, constants
+from . import topic_parser, constants, Message, version_compat
 
 
 def build_edge_topic_prefix(device_id: str, module_id: str) -> str:
@@ -148,7 +149,7 @@ def build_twin_get_publish_topic(device_id: str, module_id: str) -> str:
 
 
 def build_telemetry_publish_topic(
-    device_id: str, module_id: str, properties: Dict[str, str] = None
+    device_id: str, module_id: str, message: Message
 ) -> str:
     """
     Build a topic string that can be used to publish device/module telemetry to the service.  If
@@ -160,17 +161,20 @@ def build_telemetry_publish_topic(
 
     :return: The topic string used publish device/module telemetry to the service.
     """
-    assert not properties
-    # TODO: properties
 
     if constants.EDGEHUB_TOPIC_RULES:
-        return (
+        topic = (
             build_edge_topic_prefix(device_id, module_id) + "messages/events/"
         )
     else:
-        return (
+        topic = (
             build_iothub_topic_prefix(device_id, module_id) + "messages/events/"
         )
+
+    if message:
+        topic += encode_message_properties_for_topic(message)
+
+    return topic
 
 
 def build_c2d_subscribe_topic(
@@ -255,3 +259,86 @@ def build_method_response_publish_topic(
             status=urllib.parse.quote(str(status_code), safe=""),
             request_id=urllib.parse.quote(str(request_id), safe=""),
         )
+
+
+def encode_message_properties_for_topic(message_to_send: Message) -> str:
+    """
+    uri-encode the system properties of a message as key-value pairs on the topic with defined keys.
+    Additionally if the message has user defined properties, the property keys and values shall be
+    uri-encoded and appended at the end of the above topic with the following convention:
+    '<key>=<value>&<key2>=<value2>&<key3>=<value3>(...)'
+    :param message_to_send: The message to send
+    :param topic: The topic which has not been encoded yet. For a device it looks like
+    "devices/<deviceId>/messages/events/" and for a module it looks like
+    "devices/<deviceId>/modules/<moduleId>/messages/events/
+    :return: The topic which has been uri-encoded
+    """
+    topic = ""
+
+    system_properties: List[Tuple[str, str]] = []
+
+    if message_to_send.output_name:
+        system_properties.append(("$.on", str(message_to_send.output_name)))
+    if message_to_send.message_id:
+        system_properties.append(("$.mid", str(message_to_send.message_id)))
+
+    if message_to_send.correlation_id:
+        system_properties.append(("$.cid", str(message_to_send.correlation_id)))
+
+    if message_to_send.user_id:
+        system_properties.append(("$.uid", str(message_to_send.user_id)))
+
+    if message_to_send.content_type:
+        system_properties.append(("$.ct", str(message_to_send.content_type)))
+
+    if message_to_send.content_encoding:
+        system_properties.append(
+            ("$.ce", str(message_to_send.content_encoding))
+        )
+
+    if message_to_send.iothub_interface_id:
+        system_properties.append(
+            ("$.ifid", str(message_to_send.iothub_interface_id))
+        )
+
+    expiry = None
+    if isinstance(message_to_send.expiry_time_utc, str):
+        expiry = message_to_send.expiry_time_utc
+    elif isinstance(message_to_send.expiry_time_utc, datetime):
+        expiry = message_to_send.expiry_time_utc.isoformat()
+
+    if expiry:
+        system_properties.append(("$.exp", expiry))
+
+    system_properties_encoded = version_compat.urlencode(
+        system_properties, quote_via=urllib.parse.quote
+    )
+    topic += system_properties_encoded
+
+    if (
+        message_to_send.custom_properties
+        and len(message_to_send.custom_properties) > 0
+    ):
+        if system_properties and len(system_properties) > 0:
+            topic += "&"
+
+        # Convert the custom properties to a sorted list in order to ensure the
+        # resulting ordering in the topic string is consistent across versions of Python.
+        # Convert to the properties to strings for safety.
+        custom_prop_seq = [
+            (str(i[0]), str(i[1]))
+            for i in list(message_to_send.custom_properties.items())
+        ]
+        custom_prop_seq.sort()
+
+        # Validate that string conversion has not created duplicate keys
+        keys = [i[0] for i in custom_prop_seq]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Duplicate keys in custom properties!")
+
+        user_properties_encoded = version_compat.urlencode(
+            custom_prop_seq, quote_via=urllib.parse.quote
+        )
+        topic += user_properties_encoded
+
+    return topic

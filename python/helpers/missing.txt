@@ -1,9 +1,6 @@
 still needs to be done:
 * testing of new topic format
-* add telemetry properties
-* addition of content-type and content-encoding properties and ASC properties.
 * status code mapping for twin ops
-* module inputs and outputs (trivial if we have the schema)
 * digital twin helpers.  I'm not sure of the scope here. 
 * use correct api version
 * add user agent strings

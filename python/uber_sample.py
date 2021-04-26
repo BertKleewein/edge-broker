@@ -118,7 +118,7 @@ class SampleApp(object):
             msg = Message(payload)
 
             telemetry_topic = topic_builder.build_telemetry_publish_topic(
-                self.auth.device_id, self.auth.module_id, msg.properties
+                self.auth.device_id, self.auth.module_id, msg
             )
             mi = self.mqtt_client.publish(
                 telemetry_topic, msg.get_binary_payload(), qos=1
