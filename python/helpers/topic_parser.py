@@ -204,3 +204,26 @@ def extract_properties(topic: str) -> Dict[str, str]:
         d[key] = value
 
     return d
+
+
+def extract_input_name(topic: str) -> str:
+    """
+    Extract the input name out of a topic string.
+
+    :param str topic: The topic to extract the value from
+
+    :raises: `ValueError` if the value could not be extracted from the string.
+
+    :returns: The extracted value
+    """
+
+    _verify_topic(topic, "/inputs/", "Edge module input")
+
+    segments = topic.split("/")
+    for i in range(len(segments)):
+        if segments[i] == "inputs":
+            return segments[i + 1]
+
+    raise ValueError(
+        "Topic string is not an input message or does not contain an input name"
+    )
