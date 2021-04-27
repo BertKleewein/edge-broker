@@ -5,7 +5,6 @@ import ssl
 import abc
 import threading
 import time
-import weakref
 import logging
 from typing import Callable
 from . import sas_token, constants
@@ -141,7 +140,7 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
     @property
     def seconds_until_sas_token_renewal(self) -> int:
         """
-        Nunmber of seconds before the current SAS token needs to be removed.
+        Number of seconds before the current SAS token needs to be removed.
         """
         return max(0, self.sas_token_renewal_time - int(time.time()))
 
@@ -172,20 +171,6 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
         self.cancel_sas_token_renewal_timer()
         self.on_sas_token_renewed = on_sas_token_renewed
 
-        # Use weak a weak reference to self so the timer doesn't prevent this object
-        # from being collected.
-        self_weakref = weakref.ref(self)
-
-        def on_timer_expired() -> None:
-            this = self_weakref()
-            if this:
-                this.sas_token_renewal_timer = None
-                this.renew_sas_token()
-            else:
-                logger.info(
-                    "Renewal timer triggered after TokenRenewalHelper already collected"
-                )
-
         # Set a new timer.
         seconds_until_renewal = self.seconds_until_sas_token_renewal
         self.sas_token_renewal_timer = threading.Timer(
@@ -195,14 +180,14 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
         self.sas_token_renewal_timer.start()
 
         logger.info(
-            "SAS token renwal timer set for {} seconds in the future, at approximately {}".format(
+            "SAS token renewal timer set for {} seconds in the future, at approximately {}".format(
                 seconds_until_renewal, self.sas_token_expiry_time
             )
         )
 
     def renew_sas_token(self) -> None:
         """
-        Renew authorization. This casuses a new password string to be generated and the
+        Renew authorization. This  causes a new password string to be generated and the
             `on_sas_token_renewed` function to be called.
         """
         logger.info("Renewing sas token and reconnecting")

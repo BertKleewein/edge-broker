@@ -13,7 +13,7 @@ else:
 
 class MQTTMessage(Protocol):
     """
-    PEP 544-compatible Protocol object for defining what our helper methds expect
+    PEP 544-compatible Protocol object for defining what our helper methods expect
     when they accept an MQTT Message object.  Only used for static code validation.
     """
 

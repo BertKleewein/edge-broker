@@ -1,0 +1,119 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Usage: Connect and Disconnect",
+  "steps": [
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 8,
+          "character": 1
+        },
+        "end": {
+          "line": 8,
+          "character": 37
+        }
+      },
+      "description": "Users need to import the transport themselves.  All of our samples use Paho, but the helper functions should work with \"any\" transport."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 94,
+          "character": 1
+        },
+        "end": {
+          "line": 99,
+          "character": 76
+        }
+      },
+      "description": "The user needs to create their auth object.  This could also be `EdgeAuth.create_from_environment`"
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 103,
+          "character": 1
+        },
+        "end": {
+          "line": 110,
+          "character": 73
+        }
+      },
+      "description": "The user has to create the transport, set the username and password, and set the TLS context."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 113,
+          "character": 1
+        },
+        "end": {
+          "line": 113,
+          "character": 61
+        }
+      },
+      "description": "For Paho, we need an `on_connect` handler to know when we're connected. "
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 115,
+          "character": 1
+        },
+        "end": {
+          "line": 121,
+          "character": 69
+        }
+      },
+      "description": "And we need to start the Paho loop and call connect.  If this was a leaf device, they would need to pass `self.auth.gatewayhostname`.  We can make this easier in the future with more convenience objects.\n"
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 124,
+          "character": 1
+        },
+        "end": {
+          "line": 126,
+          "character": 24
+        }
+      },
+      "description": "the `connect` function started the connection.  We need to wait for our own `self.connected` Event to be set before we start sending telemetry."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 36,
+          "character": 1
+        },
+        "end": {
+          "line": 37,
+          "character": 33
+        }
+      },
+      "description": "And this is where the customer calls `self.connected.set()` if/when the connection goes through."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 123,
+          "character": 2
+        },
+        "end": {
+          "line": 126,
+          "character": 24
+        }
+      },
+      "description": "If the connection doesn't go through, our 20-second timeout expires and we exit the app.  This is a sample and we're not providing anything to help with retry and reconnect (yet)"
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}

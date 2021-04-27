@@ -14,10 +14,10 @@ message_match_predicate = Callable[[str], bool]
 
 class IncomingMessageList(object):
     """
-    thread-safe obhject used to keep track of incoming MQTT messages.  This object
+    thread-safe object used to keep track of incoming MQTT messages.  This object
     supports the concept of "waiting" for specific types of messages to be added to the list.
     In this way, "do-work" loops can be written which wait for specific types of messages to
-    arrive and functions can be written to wait for messages like twin responses with speficic
+    arrive and functions can be written to wait for messages like twin responses with specific
     request_id values.
 
     These "wait" operations are done in a thread-safe manner using the `Condition` class
@@ -45,10 +45,10 @@ class IncomingMessageList(object):
 
     def _pop_next(self, predicate: message_match_predicate) -> MQTTMessage:
         """
-        Inernal function to remove and return the next message in the list
+        Internal function to remove and return the next message in the list
         which satisfies the passed predicate.
 
-        :param callable predicate: Function which accepts a message objdct and
+        :param callable predicate: Function which accepts a message object and
             Returns True if that message satisfies some condition.  When this function
             returns True for some message, that message will be removed from the list and
             returned to the caller.
@@ -71,12 +71,12 @@ class IncomingMessageList(object):
         Internal function which waits until a message which matches the given predicate
         gets added to our list.
 
-        :param callable predicate: Functoin which accepts a message object and returns
+        :param callable predicate: function which accepts a message object and returns
             True if that message can be returned from this function.
         :param float timeout: Amount of time to wait before returning.
 
-        :returns: The objet which $atisfies the predicate, or `None` if no matching object
-            becomes available beore the timeout elapses.
+        :returns: The objet which satisfies the predicate, or `None` if no matching object
+            becomes available before the timeout elapses.
         """
 
         with self.cv:
@@ -113,7 +113,7 @@ class IncomingMessageList(object):
         :param float timeout: Amount of time to wait before returning.  `0` to
             check the list and return immediately without waiting.
 
-        :returns: The next message in the list, or `None` if no messge gets
+        :returns: The next message in the list, or `None` if no message gets
             added before the timeout elapses.
         """
         return self._wait_and_pop_next(lambda message: True, timeout=timeout)
@@ -127,7 +127,7 @@ class IncomingMessageList(object):
         :param float timeout: Amount of time to wait before returning.  `0` to
             check the list and return immediately without waiting.
 
-        :returns: The next matching message in the list, or `None` if no messge gets
+        :returns: The next matching message in the list, or `None` if no message gets
             added before the timeout elapses.
         """
         return self._wait_and_pop_next(
@@ -145,7 +145,7 @@ class IncomingMessageList(object):
         :param float timeout: Amount of time to wait before returning.  `0` to
             check the list and return immediately without waiting.
 
-        :returns: The next matching message in the list, or `None` if no messge gets
+        :returns: The next matching message in the list, or `None` if no message gets
             added before the timeout elapses.
         """
         return self._wait_and_pop_next(
@@ -163,7 +163,7 @@ class IncomingMessageList(object):
         :param float timeout: Amount of time to wait before returning.  `0` to
             check the list and return immediately without waiting.
 
-        :returns: The next matching message in the list, or `None` if no messge gets
+        :returns: The next matching message in the list, or `None` if no message gets
             added before the timeout elapses.
         """
         return self._wait_and_pop_next(
@@ -182,7 +182,7 @@ class IncomingMessageList(object):
         :param float timeout: Amount of time to wait before returning.  `0` to
             check the list and return immediately without waiting.
 
-        :returns: The next matching message in the list, or `None` if no messge gets
+        :returns: The next matching message in the list, or `None` if no message gets
             added before the timeout elapses.
         """
         return self._wait_and_pop_next(

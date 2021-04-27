@@ -52,7 +52,7 @@ class SampleApp(object):
         # Set the new MQTT auth parameters
         self.mqtt_client.username_pw_set(self.auth.username, self.auth.password)
 
-        # Reconect the client.  (This actually just disconnects it and lets Paho's automatic
+        # Reconnect the client.  (This actually just disconnects it and lets Paho's automatic
         # reconnect connect again.)
         self.mqtt_client.reconnect()
 
@@ -81,6 +81,8 @@ class SampleApp(object):
                 telemetry_topic, msg.get_binary_payload(), qos=1
             )
 
+            if mi.rc:
+                raise Exception(mqtt.error_string(mi.rc))
             # Remember the message info for later
             outstanding_messages.append(mi)
 
@@ -118,7 +120,7 @@ class SampleApp(object):
         # know that we're connected.
         self.mqtt_client.connect(self.auth.hostname, self.auth.port)
 
-        # wait for the connectoin, but don't wait too long
+        # wait for the connection, but don't wait too long
         if not self.connected.wait(timeout=20):
             logger.error("Failed to connect.")
             sys.exit(1)

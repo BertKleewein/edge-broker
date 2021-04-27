@@ -1,0 +1,119 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Usage: Get twin",
+  "steps": [
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 167,
+          "character": 1
+        },
+        "end": {
+          "line": 168,
+          "character": 61
+        }
+      },
+      "description": "In order to get a twin, we need the `on_subscribe` and `on_message` handlers added."
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 44,
+          "character": 1
+        },
+        "end": {
+          "line": 55,
+          "character": 57
+        }
+      },
+      "description": "`on_subscribe` is boilerplate.  It just adds the `mid` and `granted_qos` to `self.incoming_subacks`."
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 81,
+          "character": 1
+        },
+        "end": {
+          "line": 88,
+          "character": 1
+        }
+      },
+      "description": "Likewise, the `on_message` handler is boilerplate. It just adds the received message to `self.incoming_messages`."
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 60,
+          "character": 1
+        },
+        "end": {
+          "line": 65,
+          "character": 19
+        }
+      },
+      "description": "For get_twin, we only need to subscribe to the `twin_response_subscribe_topic`.  This sample also receives patches, so it subscribes to the `twin_patch_desired_subscribe_topic`, but this isn't necessary for this tour."
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 78,
+          "character": 1
+        },
+        "end": {
+          "line": 79,
+          "character": 56
+        }
+      },
+      "description": "And, of course, our sample waits for the SUBACK.  Like other samples, it doesn't handle the case where the SUBACK never arrives.  "
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 96,
+          "character": 1
+        },
+        "end": {
+          "line": 98,
+          "character": 10
+        }
+      },
+      "description": "Now that our client is configured, we can do the work to get the twin.\n\nFirst, we build a topic string for our \"get twin\" message.  This topic string has a `request_id` value in it."
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 101,
+          "character": 3
+        },
+        "end": {
+          "line": 101,
+          "character": 52
+        }
+      },
+      "description": "We publish the get-twin message.  This message doesn't have a payload"
+    },
+    {
+      "file": "python/sample_4_twins.py",
+      "selection": {
+        "start": {
+          "line": 108,
+          "character": 1
+        },
+        "end": {
+          "line": 110,
+          "character": 10
+        }
+      },
+      "description": "The we use `self.incoming_messages.pop_next_twin_response` to wait until our response gets added to the `self.incoming_messages` list.  \n\nNotice how we pass `request_topic=topic` into this call.  We do this because we only want the twin response which has a matching `request_id`.  That's the response we're interested in."
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}

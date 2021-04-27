@@ -1,0 +1,63 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Usage: Token Renewal",
+  "steps": [
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 101,
+          "character": 1
+        },
+        "end": {
+          "line": 101,
+          "character": 77
+        }
+      },
+      "description": "token renewal is only in sample_1_telemetry.py in order to keep the other samples simple.  Here we start the token renewal timer with a callback that gets called after renewal."
+    },
+    {
+      "file": "python/helpers/constants.py",
+      "selection": {
+        "start": {
+          "line": 14,
+          "character": 1
+        },
+        "end": {
+          "line": 18,
+          "character": 35
+        }
+      },
+      "description": "Token interval and margin are stored in `constants.py`.  This should probably be `settings.py` but this is bare-bones and can be polished later.  Honestly, 1/20 customers are going to change this, and they're going to do it once, so this is probably all we need."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 49,
+          "character": 1
+        },
+        "end": {
+          "line": 59,
+          "character": 77
+        }
+      },
+      "description": "After the token renews, the customer needs to pass the new password into the transport and reconnect.  They also need to set a new timer.\nThis is all boilerplate code that probably belongs in some sort of \"Paho convenience layer\", but we're not doing that yet."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 41,
+          "character": 1
+        },
+        "end": {
+          "line": 45,
+          "character": 1
+        }
+      },
+      "description": "This is the last bit of renewal logic.  If we get this error from Paho in an `on_connect` call, it's possible that we need to renew our token.  If so, renew it.\n\nNote: this code has nothing to deal with other connection failures, especially after the first time.  Again, I think we need some sort of retry/reconnect logic, maybe as part of a \"Paho convenience layer\" or maybe separate helper objects that we can use from inside that convenience layer."
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}

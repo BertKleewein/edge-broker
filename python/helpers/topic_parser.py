@@ -162,7 +162,7 @@ def extract_status_code(topic: str) -> str:
     :returns: The extracted status_code value
     """
     _verify_topic(
-        topic, ["/methods/res/", "/twin/res"], "methods or twin resopnse"
+        topic, ["/methods/res/", "/twin/res"], "methods or twin response"
     )
     segments = topic.split("/")
     for i in range(len(segments)):
@@ -189,7 +189,7 @@ def extract_properties(topic: str) -> Dict[str, str]:
     """
     Return a dictionary of properties from a topic string
 
-    :poram str topic: Full topic string to extract properties from
+    :param str topic: Full topic string to extract properties from
 
     :returns: dictionary with topic names and values
     """

@@ -19,5 +19,5 @@ not gonna do:
 * Any significant failure handling, reconnect, and retry code in the samples.  
 * reconnect/retry helpers (probably tied to the Paho convenience layer(s))
 * plans for track 2 SDK and/or iothub broker
-* specific property maps (valid names and corret encoding for track 2 iothub mqtt)
+* specific property maps (valid names and correct encoding for track 2 iothub mqtt)
 

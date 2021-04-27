@@ -1,0 +1,154 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Architecture: Auth Objects",
+  "steps": [
+    {
+      "title": "Auth base classes",
+      "description": "Auth object have base classes for common functionality, starting with `AuthorizationBase`"
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 54,
+          "character": 1
+        },
+        "end": {
+          "line": 82,
+          "character": 34
+        }
+      },
+      "description": "All auth objects provide properties for `client_id`, `username` and `password`"
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 47,
+          "character": 1
+        },
+        "end": {
+          "line": 52,
+          "character": 43
+        }
+      },
+      "description": "As well as other attributes that customers will need to connect to the service."
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 85,
+          "character": 1
+        },
+        "end": {
+          "line": 85,
+          "character": 58
+        }
+      },
+      "description": "Auth with renewable tokens has a sub-class that handles expiration and renewal logic.",
+      "title": "Renewable Token Auth"
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 115,
+          "character": 1
+        },
+        "end": {
+          "line": 147,
+          "character": 1
+        }
+      },
+      "description": "It also has a handful of functions that deal with token expiration and renewal times."
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 157,
+          "character": 1
+        },
+        "end": {
+          "line": 159,
+          "character": 15
+        }
+      },
+      "description": "It also has a function to set the renewal timer.\n\nThe customer needs to call this, and they need to provide a callback that gets called after the token is renewed.\n\nThis way, the customer can re-conenct the transport.\n\n(The customer has to do this because this object knows nothing about Paho.)"
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 203,
+          "character": 4
+        },
+        "end": {
+          "line": 203,
+          "character": 39
+        }
+      },
+      "description": "And a function to manually renew the token.\n\nThere are some cases where customers migth need to do this on their own (like after a long hibernation)."
+    },
+    {
+      "file": "python/helpers/base_auth.py",
+      "selection": {
+        "start": {
+          "line": 220,
+          "character": 4
+        },
+        "end": {
+          "line": 220,
+          "character": 52
+        }
+      },
+      "description": "Finally, we have a function to create the `SSLContext` object that the customer can use to secure the TLS connection.  \nThe customer needs to pass this into the transport, and they can update it (or make their own) if they want something different."
+    },
+    {
+      "file": "python/helpers/edge_auth.py",
+      "selection": {
+        "start": {
+          "line": 9,
+          "character": 1
+        },
+        "end": {
+          "line": 9,
+          "character": 59
+        }
+      },
+      "description": "Auth for Edge modules is handled by the EdgeAuth object",
+      "title": "EdgeAuth"
+    },
+    {
+      "file": "python/helpers/edge_auth.py",
+      "selection": {
+        "start": {
+          "line": 46,
+          "character": 1
+        },
+        "end": {
+          "line": 48,
+          "character": 10
+        }
+      },
+      "description": "There's really not much to this.  The signing is handled by the workload API.  Everything else is handled by base classes."
+    },
+    {
+      "file": "python/helpers/symmetric_key_auth.py",
+      "selection": {
+        "start": {
+          "line": 14,
+          "character": 7
+        },
+        "end": {
+          "line": 14,
+          "character": 23
+        }
+      },
+      "description": "`SymmetricKeyAuth` handles connection strings with symmetric keys.  Again, most of the hard work is handled by base classes and there's an `HmacSigningMechanism` object to do the actual signing operation.",
+      "title": "SymmetricKeyAuth"
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}

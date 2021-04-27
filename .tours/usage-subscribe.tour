@@ -1,0 +1,77 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Usage: Subscribe",
+  "steps": [
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 56,
+          "character": 1
+        },
+        "end": {
+          "line": 63,
+          "character": 60
+        }
+      },
+      "description": "Subscribing is a little harder because Paho doesn't give us any kind of `wait_for_subscribe` functionality.\nIn fact, if the SUBSCRIBE gets lost and Paho doesn't get a SUBACK, it just disappears.  There is no `QOS=1` functionality with SUBSCRIBE.\n(The `qos=1` parameter that you pass into paho's `subscribe` function is the `qos` that the service uses when sending messages on that subscription.  It has nothing to do with delivery of the `SUBSCRIBE` itself.)"
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 66,
+          "character": 8
+        },
+        "end": {
+          "line": 66,
+          "character": 61
+        }
+      },
+      "description": "This is where we wait for the SUBACK to come back.\n\nThis sample code is a little broken.  If the SUBACK never arrives back, this function will time out and our sample code does not handle this case.\n\nThis error handling will need to be done by the user, and it probably belongs in some future reconnect/retry helpers and/or Paho convenience layer."
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 96,
+          "character": 9
+        },
+        "end": {
+          "line": 96,
+          "character": 65
+        }
+      },
+      "description": "Since we added a handler for `on_subscribe`, our `handle_on_subscribe` function gets called when Paho receives the SUBACK."
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 53,
+          "character": 1
+        },
+        "end": {
+          "line": 53,
+          "character": 57
+        }
+      },
+      "description": "`handle_on_subscribe`, called from inside some arbitrary Paho thread, just calls `incoming_subacks.add_item` to record the fact that this `SUBACK` was received."
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 65,
+          "character": 1
+        },
+        "end": {
+          "line": 67,
+          "character": 54
+        }
+      },
+      "description": "Back in `subscribe_for_c2d`, we use the poorly-named `get_next_item` function to do a thread-safe wait for an entry with key=`mid` to be added to our dictionary.\nUnfortunately, this might timeout because Paho doesn't do retry on lost SUBSCRIBE.  This is where our sample is missing error handling.  The customer will need to detect the lost SUBACK and send a new SUBSCRIBE.  This is something we can add in future retry helpers or in a Paho convenience layer."
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}
