@@ -73,5 +73,5 @@
       "description": "And finally, this is where we wait to make sure we got all of our PUBACKs back.  It's too bad that `wait_for_publish` doesn't take a timeout value.  Maybe we should add that."
     }
   ],
-  "ref": "714ad61d84748033e2716303952ad5200447fdd3"  
+  "ref": "0e40b7933cd03e38f2ab8a22ab5dfaffb8063025"
 }

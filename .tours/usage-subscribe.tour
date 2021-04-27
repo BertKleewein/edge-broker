@@ -73,5 +73,5 @@
       "description": "Back in `subscribe_for_c2d`, we use the poorly-named `get_next_item` function to do a thread-safe wait for an entry with key=`mid` to be added to our dictionary.\nUnfortunately, this might timeout because Paho doesn't do retry on lost SUBSCRIBE.  This is where our sample is missing error handling.  The customer will need to detect the lost SUBACK and send a new SUBSCRIBE.  This is something we can add in future retry helpers or in a Paho convenience layer."
     }
   ],
-  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+  "ref": "0e40b7933cd03e38f2ab8a22ab5dfaffb8063025"
 }

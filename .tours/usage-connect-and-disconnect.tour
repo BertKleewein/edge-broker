@@ -20,12 +20,12 @@
       "file": "python/sample_1_telemetry.py",
       "selection": {
         "start": {
-          "line": 94,
+          "line": 96,
           "character": 1
         },
         "end": {
           "line": 99,
-          "character": 76
+          "character": 58
         }
       },
       "description": "The user needs to create their auth object.  This could also be `EdgeAuth.create_from_environment`"
@@ -115,5 +115,5 @@
       "description": "If the connection doesn't go through, our 20-second timeout expires and we exit the app.  This is a sample and we're not providing anything to help with retry and reconnect (yet)"
     }
   ],
-  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+  "ref": "0e40b7933cd03e38f2ab8a22ab5dfaffb8063025"
 }

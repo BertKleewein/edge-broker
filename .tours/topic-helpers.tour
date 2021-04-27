@@ -80,11 +80,11 @@
       "file": "python/helpers/topic_builder.py",
       "selection": {
         "start": {
-          "line": 210,
+          "line": 208,
           "character": 1
         },
         "end": {
-          "line": 212,
+          "line": 210,
           "character": 10
         }
       },
@@ -186,11 +186,11 @@
       "file": "python/helpers/topic_matcher.py",
       "selection": {
         "start": {
-          "line": 53,
+          "line": 51,
           "character": 1
         },
         "end": {
-          "line": 53,
+          "line": 51,
           "character": 32
         }
       },
@@ -214,29 +214,15 @@
       "file": "python/helpers/topic_matcher.py",
       "selection": {
         "start": {
-          "line": 38,
+          "line": 37,
           "character": 1
         },
         "end": {
-          "line": 39,
-          "character": 47
+          "line": 38,
+          "character": 1
         }
       },
       "description": "All of our \"incoming message\" features are in here.  This function returns `True` if the given topic is an incoming twin property patch. \n\nNotice that it doesn't take a `device_id` or `module_id`.  If you want that, you can use `sent_to_device` or `sent_to_module`"
-    },
-    {
-      "file": "python/helpers/topic_matcher.py",
-      "selection": {
-        "start": {
-          "line": 7,
-          "character": 1
-        },
-        "end": {
-          "line": 7,
-          "character": 62
-        }
-      },
-      "description": ""
     },
     {
       "file": "python/helpers/topic_matcher.py",
@@ -264,26 +250,8 @@
           "character": 68
         }
       },
-      "description": ""
-    },
-    {
-      "file": "python/helpers/topic_matcher.py",
-      "description": ""
-    },
-    {
-      "file": "python/helpers/topic_matcher.py",
-      "selection": {
-        "start": {
-          "line": 67,
-          "character": 1
-        },
-        "end": {
-          "line": 67,
-          "character": 68
-        }
-      },
       "description": "`is_method_request` is also interesting because it accepts an optional `method_name`.  Without method name, this returns `True` for _any_ method request topic.  With a method name, this function only returns `True` if the topic is a method request for that specific name."
     }
   ],
-  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+  "ref": "0e40b7933cd03e38f2ab8a22ab5dfaffb8063025"
 }

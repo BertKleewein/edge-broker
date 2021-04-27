@@ -115,5 +115,5 @@
       "description": "The we use `self.incoming_messages.pop_next_twin_response` to wait until our response gets added to the `self.incoming_messages` list.  \n\nNotice how we pass `request_topic=topic` into this call.  We do this because we only want the twin response which has a matching `request_id`.  That's the response we're interested in."
     }
   ],
-  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+  "ref": "0e40b7933cd03e38f2ab8a22ab5dfaffb8063025"
 }
