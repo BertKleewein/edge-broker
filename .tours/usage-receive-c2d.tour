@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Usage: receive C2D",
+  "title": "15. Usage: receive C2D",
   "steps": [
     {
       "file": "python/sample_2_c2d.py",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Usage: Subscribe",
+  "title": "14. Usage: Subscribe",
   "steps": [
     {
       "file": "python/sample_2_c2d.py",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Usage: Publish/PUBACK",
+  "title": "13. Usage: Publish/PUBACK",
   "steps": [
     {
       "file": "python/sample_1_telemetry.py",

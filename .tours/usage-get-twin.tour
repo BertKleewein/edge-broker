@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Usage: Get twin",
+  "title": "16. Usage: Get twin",
   "steps": [
     {
       "file": "python/sample_4_twins.py",

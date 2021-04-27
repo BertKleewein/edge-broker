@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Architecture: Auth Objects",
+  "title": "02, Architecture: Auth Objects",
   "steps": [
     {
       "title": "Auth base classes",

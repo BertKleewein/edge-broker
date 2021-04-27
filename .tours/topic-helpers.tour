@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Architecture: Topic Helpers",
+  "title": "01. Architecture: Topic Helpers",
   "steps": [
     {
       "title": "Topic Builders",

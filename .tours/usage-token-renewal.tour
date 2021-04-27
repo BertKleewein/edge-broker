@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
-  "title": "Usage: Token Renewal",
+  "title": "12. Usage: Token Renewal",
   "steps": [
     {
       "file": "python/sample_1_telemetry.py",
