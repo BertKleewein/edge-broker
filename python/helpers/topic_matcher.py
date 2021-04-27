@@ -9,7 +9,7 @@ def is_twin_response(topic: str, request_topic: str) -> bool:
     Determine if a received topic string is a response to a previously sent twin request topic
 
     :param str topic: The topic which was received.
-    :param str request_topic: (optional) The twin request which was previously sent.  If `None`, this function will return True if `topic` is a twin resopnse for _any_ request.
+    :param str request_topic: (optional) The twin request which was previously sent.  If `None`, this function will return True if `topic` is a twin response for _any_ request.
 
     :returns: `True` if `topic` is a twin response.  If `request_topic` is provided, only return `True` if the response matches the request.
     """

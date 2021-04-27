@@ -1,0 +1,289 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Architecture: Topic Helpers",
+  "steps": [
+    {
+      "title": "Topic Builders",
+      "description": "topic_builder.py has a set of helper functions that can be used to build topic strings for `SUBSCRIBE` and also for `PUBLISH`"
+    },
+    {
+      "file": "python/helpers/topic_builder.py",
+      "selection": {
+        "start": {
+          "line": 151,
+          "character": 1
+        },
+        "end": {
+          "line": 153,
+          "character": 10
+        }
+      },
+      "description": "`build_telemetry_publish_topic` can be used to create a topic string for publishing telemetry.  In addition to `device_id` and `module_id`, it takes a `Message` object so it can add message properties to the topic."
+    },
+    {
+      "file": "python/helpers/topic_builder.py",
+      "selection": {
+        "start": {
+          "line": 165,
+          "character": 5
+        },
+        "end": {
+          "line": 173,
+          "character": 1
+        }
+      },
+      "description": "Right now, it can make topic strings for the exiting iothub topic schema and also the current edgehub topic schema.  The specific schemas will change, especially as we add broker support to iothub, but the function signatures should not."
+    },
+    {
+      "file": "python/helpers/topic_builder.py",
+      "selection": {
+        "start": {
+          "line": 180,
+          "character": 1
+        },
+        "end": {
+          "line": 182,
+          "character": 10
+        }
+      },
+      "description": "we also have functions for subscribing.  This function builds the subscribe topic for C2D.  The `include_wildcard_suffix` is used internally by `topic_matcher.py`"
+    },
+    {
+      "file": "python/helpers/topic_builder.py",
+      "selection": {
+        "start": {
+          "line": 46,
+          "character": 1
+        },
+        "end": {
+          "line": 48,
+          "character": 10
+        }
+      },
+      "description": "Twin has 2 different functions for subscribe -- one for `res` topics and one for `PATCH` topics.  You'll notice that this takes `device_id` and `module_id` which aren't used for twin in the old (iothub) schema, but they are used in the new (edgehub and iothub broker) schemas."
+    },
+    {
+      "file": "python/helpers/topic_builder.py",
+      "selection": {
+        "start": {
+          "line": 128,
+          "character": 1
+        },
+        "end": {
+          "line": 150,
+          "character": 56
+        }
+      },
+      "description": "When we build a twin GET or PATCH topic for publish, this is a \"one-time\" topic, which contains a `request_id` value.  "
+    },
+    {
+      "file": "python/helpers/topic_builder.py",
+      "selection": {
+        "start": {
+          "line": 210,
+          "character": 1
+        },
+        "end": {
+          "line": 212,
+          "character": 10
+        }
+      },
+      "description": "This file has `build_` functions for every type of MQTT message you might want to send.  Right now, we only have these functions for iothub/edgehub, but we'll probably want to add similar topic-builder functions for DPS."
+    },
+    {
+      "title": "Topic Parsers",
+      "description": "`topic_parsers.py` has a set of functions that you can use to extract information from a topic.  These functions are primarily used for topics that come via incoming messages."
+    },
+    {
+      "file": "python/helpers/topic_parser.py",
+      "selection": {
+        "start": {
+          "line": 79,
+          "character": 1
+        },
+        "end": {
+          "line": 79,
+          "character": 42
+        }
+      },
+      "description": "For topics that contain a `device_id`, we have a function to extract it from the topic.  This is really only useful for apps that use newer schemas which support identity translation. "
+    },
+    {
+      "file": "python/helpers/topic_parser.py",
+      "selection": {
+        "start": {
+          "line": 103,
+          "character": 1
+        },
+        "end": {
+          "line": 104,
+          "character": 1
+        }
+      },
+      "description": "Likewise for `module_id`"
+    },
+    {
+      "file": "python/helpers/topic_parser.py",
+      "selection": {
+        "start": {
+          "line": 188,
+          "character": 5
+        },
+        "end": {
+          "line": 188,
+          "character": 23
+        }
+      },
+      "description": "We have a function to extract properties from a topic."
+    },
+    {
+      "file": "python/helpers/topic_parser.py",
+      "selection": {
+        "start": {
+          "line": 174,
+          "character": 1
+        },
+        "end": {
+          "line": 174,
+          "character": 45
+        }
+      },
+      "description": "Twin version is just a specific property"
+    },
+    {
+      "file": "python/helpers/topic_parser.py",
+      "selection": {
+        "start": {
+          "line": 42,
+          "character": 1
+        },
+        "end": {
+          "line": 42,
+          "character": 43
+        }
+      },
+      "description": "and so is `request_id`"
+    },
+    {
+      "file": "python/helpers/topic_parser.py",
+      "selection": {
+        "start": {
+          "line": 129,
+          "character": 5
+        },
+        "end": {
+          "line": 129,
+          "character": 24
+        }
+      },
+      "description": "Likewise, we can extract method name, status code (for twin responses), and input name."
+    },
+    {
+      "title": "Topic Matchers",
+      "description": "'topic_matcher.py` has a bunch of \"is this topic for X?\" functions."
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 53,
+          "character": 1
+        },
+        "end": {
+          "line": 53,
+          "character": 32
+        }
+      },
+      "description": "Like \"is this a C2D Message\"?"
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 61,
+          "character": 1
+        },
+        "end": {
+          "line": 66,
+          "character": 10
+        }
+      },
+      "description": "Again, we support old and new schemas (for now at least)"
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 38,
+          "character": 1
+        },
+        "end": {
+          "line": 39,
+          "character": 47
+        }
+      },
+      "description": "All of our \"incoming message\" features are in here.  This function returns `True` if the given topic is an incoming twin property patch. \n\nNotice that it doesn't take a `device_id` or `module_id`.  If you want that, you can use `sent_to_device` or `sent_to_module`"
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 7,
+          "character": 1
+        },
+        "end": {
+          "line": 7,
+          "character": 62
+        }
+      },
+      "description": ""
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 7,
+          "character": 1
+        },
+        "end": {
+          "line": 8,
+          "character": 1
+        }
+      },
+      "description": "`is_twin_response` is interesting.  In addition to the topic that you're testing, it also accepts an optional `request_topic` value.  This parameter lets the function compare `request_id` values between request and response, so it will only return `True` if the topic has a matching `request_id`."
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 67,
+          "character": 1
+        },
+        "end": {
+          "line": 67,
+          "character": 68
+        }
+      },
+      "description": ""
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "description": ""
+    },
+    {
+      "file": "python/helpers/topic_matcher.py",
+      "selection": {
+        "start": {
+          "line": 67,
+          "character": 1
+        },
+        "end": {
+          "line": 67,
+          "character": 68
+        }
+      },
+      "description": "`is_method_request` is also interesting because it accepts an optional `method_name`.  Without method name, this returns `True` for _any_ method request topic.  With a method name, this function only returns `True` if the topic is a method request for that specific name."
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}

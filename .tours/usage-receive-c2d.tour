@@ -1,0 +1,63 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Usage: receive C2D",
+  "steps": [
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 99,
+          "character": 9
+        },
+        "end": {
+          "line": 99,
+          "character": 33
+        }
+      },
+      "description": "We already covered the first step of handling C2D in the \"Usage: subscribe\" tour.\n"
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 97,
+          "character": 9
+        },
+        "end": {
+          "line": 97,
+          "character": 61
+        }
+      },
+      "description": "Next we need to add an on_message handler to Paho.  This gets called whenever Paho receives an incoming message."
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 69,
+          "character": 1
+        },
+        "end": {
+          "line": 75,
+          "character": 47
+        }
+      },
+      "description": "Inside our `handle_on_message` function, which is called from some arbitrary Paho thread context, we call `self.incoming_messages.add_item` and pass in the message.  This will do a thread-safe add of thie message to an internal list, and notify any listeners that the list has been updated."
+    },
+    {
+      "file": "python/sample_2_c2d.py",
+      "selection": {
+        "start": {
+          "line": 103,
+          "character": 1
+        },
+        "end": {
+          "line": 105,
+          "character": 14
+        }
+      },
+      "description": "Back in our main loop, we use `self.incoming_messages.pop_next_c2d` to do a thread-safe wait for some code to put a c2d message into the `incoming_messages` list.\n\nBecause we're providing a non-zero `timeout`, this function won't return until one of two things happens:\n1. A new C2d message gets added to the list, in which that message will be removed from the list and returned.\n2. The timeout expires, in which case `None` will be returned."
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"
+}

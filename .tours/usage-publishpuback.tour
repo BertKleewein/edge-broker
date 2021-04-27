@@ -1,0 +1,77 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Usage: Publish/PUBACK",
+  "steps": [
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 70,
+          "character": 1
+        },
+        "end": {
+          "line": 72,
+          "character": 35
+        }
+      },
+      "description": "PUBLISH is easy, especially if you know how to use the Paho `MessageInfo` object.\nFirst, make a Message object with some JSON."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 75,
+          "character": 1
+        },
+        "end": {
+          "line": 77,
+          "character": 14
+        }
+      },
+      "description": "Use `topic_builder.build_telemetry_publish_topic` to make our topic.  \nNotice how it accepts `msg` as a parameter.  This is so it can add message properties to the topic.\nWe can set `content_type` and `content_encoding` manually, or we can let `Message` guess.  In this case, it's pretty obvious that `msg.payload` is an object, so it automagically assumes `application/json` and `utf-8`."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 80,
+          "character": 1
+        },
+        "end": {
+          "line": 82,
+          "character": 14
+        }
+      },
+      "description": "The we publish. This doesn't wait for the PUBACK."
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 84,
+          "character": 1
+        },
+        "end": {
+          "line": 86,
+          "character": 1
+        }
+      },
+      "description": "This is how Paho returns errors.\nTODO: do we check mi.rc here, or should we wait until later?  (like when we check `wait_for_publish`?)"
+    },
+    {
+      "file": "python/sample_1_telemetry.py",
+      "selection": {
+        "start": {
+          "line": 90,
+          "character": 1
+        },
+        "end": {
+          "line": 91,
+          "character": 34
+        }
+      },
+      "description": "And finally, this is where we wait to make sure we got all of our PUBACKs back.  It's too bad that `wait_for_publish` doesn't take a timeout value.  Maybe we should add that."
+    }
+  ],
+  "ref": "714ad61d84748033e2716303952ad5200447fdd3"  
+}
