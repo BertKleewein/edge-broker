@@ -3,23 +3,19 @@
 # license information.
 import logging
 import threading
-import time
 import os
-from helpers import constants
+import sys
 from paho.mqtt import client as mqtt
-from helpers import SymmetricKeyAuth
+from helpers import SymmetricKeyAuth, Message, topic_builder
 from typing import Any
 
 # SAMPLE 1
 #
-# Demonstrates how to connect to IoT Edge as a module and disconnect again.
+# Demonstrates how to send telemetry
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Do this to make testing easier.  Don't use these numbers in real life, no no no
-constants.DEFAULT_TOKEN_RENEWAL_INTERVAL = 300
-constants.DEFAULT_TOKEN_RENEWAL_MARGIN = 30
+logging.getLogger("paho").setLevel(level=logging.DEBUG)
 
 
 class SampleApp(object):
@@ -62,6 +58,36 @@ class SampleApp(object):
 
         self.auth.set_sas_token_renewal_timer(self.handle_sas_token_renewed)
 
+    def send_telemetry(self) -> None:
+        messages_to_send = 20
+
+        # keep track of all our messages
+        outstanding_messages = []
+
+        for i in range(0, messages_to_send):
+            logger.info("Sending telemetry {}".format(i))
+
+            # Make a message
+            payload = {"index": i, "text": "This is message # {}".format(i)}
+            msg = Message(payload)
+
+            # Get our telemetry topic
+            telemetry_topic = topic_builder.build_telemetry_publish_topic(
+                self.auth.device_id, self.auth.module_id, msg
+            )
+
+            # publish.  Don't wait for the PUBACK
+            mi = self.mqtt_client.publish(
+                telemetry_topic, msg.get_binary_payload(), qos=1
+            )
+
+            # Remember the message info for later
+            outstanding_messages.append(mi)
+
+        # Now go through and wait for everything to publish.
+        for mi in outstanding_messages:
+            mi.wait_for_publish()
+
     def main(self) -> None:
         logger.info("Azure IoT Edge Protocol Translation Module (PTM) Sample")
 
@@ -75,6 +101,7 @@ class SampleApp(object):
         # Create an MQTT client object, passing in the credentials we
         # get from the auth object
         self.mqtt_client = mqtt.Client(self.auth.client_id)
+        self.mqtt_client.enable_logger()
         self.mqtt_client.username_pw_set(self.auth.username, self.auth.password)
         # In this sample, we use the TLS context that the auth object builds for
         # us.  We could also build our own from the contents of the auth object
@@ -94,17 +121,11 @@ class SampleApp(object):
         # wait for the connectoin, but don't wait too long
         if not self.connected.wait(timeout=20):
             logger.error("Failed to connect.")
+            sys.exit(1)
 
-        else:
+        self.send_telemetry()
 
-            # if `self.connected` was set, we know that we're connected.
-            # sleep for a litle while, then disconnect.
-            logger.info("sleeping...")
-            time.sleep(3600)
-            logger.info("Disconecting")
-            self.mqtt_client.disconnect()
-            # `disconnect` is more immediate than `connect`.  We know
-            # that we're disconnected at this point.
+        self.mqtt_client.disconnect()
 
         logger.info("Exiting.")
 
