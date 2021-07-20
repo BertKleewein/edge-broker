@@ -3,7 +3,6 @@
 # license information.
 from typing import Dict, List, Union
 import six.moves.urllib as urllib
-from . import constants
 
 
 def _verify_topic(
@@ -20,12 +19,8 @@ def _verify_topic(
 
     :returns: None
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        if not topic.startswith("$iothub"):
-            raise ValueError("Topic is not iothub topic")
-    else:
-        if not topic.startswith("$iothub") and not topic.startswith("devices/"):
-            raise ValueError("Topic is not iothub topic")
+    if not topic.startswith("$iothub") and not topic.startswith("devices/"):
+        raise ValueError("Topic is not iothub topic")
 
     if subtopics:
         if isinstance(subtopics, str):
@@ -49,30 +44,17 @@ def extract_request_id(topic: str) -> str:
 
     :returns: The extracted request_id value.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        _verify_topic(
-            topic,
-            [
-                "/twin/reported/",
-                "/twin/get/",
-                "/twin/res/",
-                "/methods/post/",
-                "/methods/res/",
-            ],
-            "twin or methods",
-        )
-    else:
-        _verify_topic(
-            topic,
-            [
-                "/twin/PATCH/properties/reported/",
-                "/twin/res/",
-                "/twin/GET/",
-                "/methods/POST/",
-                "/methods/res",
-            ],
-            "twin or methods",
-        )
+    _verify_topic(
+        topic,
+        [
+            "/twin/PATCH/properties/reported/",
+            "/twin/res/",
+            "/twin/GET/",
+            "/methods/POST/",
+            "/methods/res",
+        ],
+        "twin or methods",
+    )
     return extract_properties(topic)["rid"]
 
 
@@ -89,15 +71,12 @@ def extract_device_id(topic: str) -> str:
     _verify_topic(topic)
     prefix = topic.split("?")[0]
     segments = prefix.split("/")
-    if constants.EDGEHUB_TOPIC_RULES:
+    if topic.startswith("devices"):
         return segments[1]
     else:
-        if topic.startswith("devices"):
-            return segments[1]
-        else:
-            raise ValueError(
-                "Can't parse device_id out of topic that doesn't contain it."
-            )
+        raise ValueError(
+            "Can't parse device_id out of topic that doesn't contain it."
+        )
 
 
 def extract_module_id(topic: str) -> str:
@@ -113,17 +92,10 @@ def extract_module_id(topic: str) -> str:
     _verify_topic(topic)
     prefix = topic.split("?")[0]
     segments = prefix.split("/")
-    if constants.EDGEHUB_TOPIC_RULES:
-        module_id = segments[1]
-        if module_id in ["messages", "twin", "methods"]:
-            return None
-        else:
-            return module_id
+    if segments[2] == "modules":
+        return segments[3]
     else:
-        if segments[2] == "modules":
-            return segments[3]
-        else:
-            return None
+        return None
 
 
 def extract_method_name(topic: str) -> str:
@@ -136,19 +108,9 @@ def extract_method_name(topic: str) -> str:
 
     :returns: The extracted method_name value.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        _verify_topic(topic, "/methods/post/", "methods")
-        post_segment = "post"
-    else:
-        _verify_topic(topic, "/methods/POST/", "methods")
-        post_segment = "POST"
+    _verify_topic(topic, "/methods/POST/", "methods")
     segments = topic.split("/")
-    for i in range(len(segments)):
-        if segments[i] == "methods" and segments[i + 1] == post_segment:
-            return segments[i + 2]
-    raise ValueError(
-        "Topic string is not a method call or does not contain a method name"
-    )
+    return segments[2]
 
 
 def extract_status_code(topic: str) -> str:
@@ -165,23 +127,15 @@ def extract_status_code(topic: str) -> str:
         topic, ["/methods/res/", "/twin/res"], "methods or twin response"
     )
     segments = topic.split("/")
-    for i in range(len(segments)):
-        if segments[i] == "res":
-            return segments[i + 1]
-    raise ValueError("Topic string does not contain a result value")
+    return segments[2]
 
 
 def extract_twin_version(topic: str) -> str:
-    if constants.EDGEHUB_TOPIC_RULES:
-        _verify_topic(
-            topic, ["/twin/reported/"], "twin reported property patch"
-        )
-    else:
-        _verify_topic(
-            topic,
-            ["/twin/PATCH/properties/reported/"],
-            "twin reported property patch",
-        )
+    _verify_topic(
+        topic,
+        ["/twin/PATCH/properties/reported/"],
+        "twin reported property patch",
+    )
     return extract_properties(topic)["version"]
 
 

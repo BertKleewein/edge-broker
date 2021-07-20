@@ -11,20 +11,22 @@
 # False = Old IotHub topic rules.
 EDGEHUB_TOPIC_RULES = False
 
-# Defult expiration period, in seconds, of any SAS tokens created by this code
-DEFAULT_TOKEN_RENEWAL_INTERVAL = 3600
+# Defult expiration period, in seconds, of any passwords (SAS tokens) created by this code
+DEFAULT_PASSWORD_RENEWAL_INTERVAL = 3600
 
-# Number of seconds before a SAS token expires that this code will create a new SAS token.
-DEFAULT_TOKEN_RENEWAL_MARGIN = 300
+# Number of seconds before a password (SAS token) expires that this code will create a new password.
+DEFAULT_PASSWORD_RENEWAL_MARGIN = 300
 
 # API version string for IOTHub APIs
-if EDGEHUB_TOPIC_RULES:
-    IOTHUB_API_VERSION = "2018-06-30"
-else:
-    IOTHUB_API_VERSION = "2019-10-01"
+EDGEHUB_PREVIEW_API_VERSION = "2018-06-30"
+IOTHUB_V1_API_VERSION = "2019-10-01"
+IOTHUB_V2_API_VERSION = "2020-06-30-preview"
 
 # Interface ID for Azure Security Center messages
 SECURITY_MESSAGE_INTERFACE_ID = "urn:azureiot:Security:SecurityAgent:1"
 
 # string encoding to use when converting between strings and byte arrays
 DEFAULT_STRING_ENCODING = "utf-8"
+
+# default content type
+DEFAULT_CONTENT_TYPE = "application/json"

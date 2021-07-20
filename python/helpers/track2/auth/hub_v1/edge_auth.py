@@ -2,6 +2,7 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 import os
+from ... import constants
 from . import base_auth, edge_workload_api, sas_token
 from typing import Any
 
@@ -10,7 +11,7 @@ class EdgeAuth(base_auth.RenewableTokenAuthorizationBase):
     def __init__(self) -> None:
         super(EdgeAuth, self).__init__()
 
-        self.hostname: str = os.environ["IOTEDGE_IOTHUBHOSTNAME"]
+        self.hub_host_name: str = os.environ["IOTEDGE_IOTHUBHOSTNAME"]
         self.device_id: str = os.environ["IOTEDGE_DEVICEID"]
         self.module_id: str = os.environ["IOTEDGE_MODULEID"]
         self.module_generation_id: str = os.environ[
@@ -25,6 +26,7 @@ class EdgeAuth(base_auth.RenewableTokenAuthorizationBase):
             workload_uri=self.workload_uri,
             api_version=self.api_version,
         )
+        self.api_version = constants.EDGEHUB_PREVIEW_API_VERSION
 
     @classmethod
     def create_from_environment(cls) -> Any:

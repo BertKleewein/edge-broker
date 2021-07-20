@@ -10,6 +10,8 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Protocol
 
+# TODO: make payload type more reliable
+
 
 class MQTTMessage(Protocol):
     """

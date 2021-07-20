@@ -5,7 +5,7 @@ import logging
 from typing import List, Callable
 import threading
 from .mqtt_message import MQTTMessage
-from . import topic_matcher
+from .topics import topic_matcher
 
 logger = logging.getLogger(__name__)
 

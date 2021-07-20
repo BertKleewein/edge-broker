@@ -8,7 +8,7 @@
 import time
 import six.moves.urllib as urllib
 from typing import Dict, Callable
-from . import constants
+from ... import constants
 
 SigningFunction = Callable[[str], str]
 
@@ -34,7 +34,7 @@ class RenewableSasToken(object):
         uri: str,
         signing_function: SigningFunction,
         key_name: str = None,
-        ttl: int = constants.DEFAULT_TOKEN_RENEWAL_INTERVAL,
+        ttl: int = constants.DEFAULT_PASSWORD_RENEWAL_INTERVAL,
     ):
         """
         :param str uri: URI of the resouce to be accessed

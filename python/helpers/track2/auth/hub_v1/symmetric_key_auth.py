@@ -2,18 +2,15 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 from typing import Any
-from . import (
-    base_auth,
-    hmac_signing_mechanism,
-    sas_token,
-    connection_string as cs,
-    constants,
-)
+from ... import constants
+from .. import hmac_signing_mechanism, connection_string as cs
+from . import base_auth, sas_token
 
 
 class SymmetricKeyAuth(base_auth.RenewableTokenAuthorizationBase):
     def __init__(self) -> None:
         super(SymmetricKeyAuth, self).__init__()
+        self.api_version = constants.IOTHUB_V1_API_VERSION
 
     @classmethod
     def create_from_connection_string(cls, connection_string: str) -> Any:
@@ -38,7 +35,7 @@ class SymmetricKeyAuth(base_auth.RenewableTokenAuthorizationBase):
         """
         conn_str = cs.ConnectionString(connection_string)
 
-        self.hostname = conn_str[cs.HOST_NAME]
+        self.hub_host_name = conn_str[cs.HOST_NAME]
         self.device_id = conn_str[cs.DEVICE_ID]
         self.module_id = conn_str.get(cs.MODULE_ID, None)
         self.gateway_host_name = conn_str.get(cs.GATEWAY_HOST_NAME, None)
@@ -51,7 +48,7 @@ class SymmetricKeyAuth(base_auth.RenewableTokenAuthorizationBase):
         self.sas_token = sas_token.RenewableSasToken(
             uri=self.sas_uri,
             signing_function=signing_mechanism.sign,
-            ttl=constants.DEFAULT_TOKEN_RENEWAL_INTERVAL,
+            ttl=constants.DEFAULT_PASSWORD_RENEWAL_INTERVAL,
         )
 
         self.sas_token.refresh()

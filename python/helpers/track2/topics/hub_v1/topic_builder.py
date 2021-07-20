@@ -5,25 +5,25 @@ from uuid import uuid4
 from typing import List, Tuple
 from datetime import datetime
 import six.moves.urllib as urllib
-from . import topic_parser, constants, Message, version_compat
+from . import topic_parser
+from ...message import Message
+from ... import version_compat
+
+default_device_id = None
+default_module_id = None
 
 
-def build_edge_topic_prefix(device_id: str, module_id: str) -> str:
-    """
-    Helper function to build the prefix that is common to all topics.
+def set_default_identity(device_id: str, module_id: str = None) -> None:
+    global default_device_id
+    global default_module_id
 
-    :param str device_id: The device_id for the device or module.
-    :param str module_id: (optional) The module_id for the module.  Set to `None` if build a prefix for a device.
-
-    :return: The topic prefix, including the trailing slash (`/`)
-    """
-    if module_id:
-        return "$iothub/{}/{}/".format(device_id, module_id)
-    else:
-        return "$iothub/{}/".format(device_id)
+    default_device_id = device_id
+    default_module_id = module_id
 
 
-def build_iothub_topic_prefix(device_id: str, module_id: str = None) -> str:
+def build_iothub_topic_prefix(
+    device_id: str = None, module_id: str = None
+) -> str:
     """
     return the string that is at the beginning of all topics for this
     device/module
@@ -33,6 +33,8 @@ def build_iothub_topic_prefix(device_id: str, module_id: str = None) -> str:
 
     :return: The topic prefix, including the trailing slash (`/`)
     """
+    device_id = device_id or default_device_id
+    module_id = module_id or default_module_id
 
     # NOTE: Neither Device ID nor Module ID should be URL encoded in a topic string.
     # See the repo wiki article for details:
@@ -44,7 +46,7 @@ def build_iothub_topic_prefix(device_id: str, module_id: str = None) -> str:
 
 
 def build_twin_response_subscribe_topic(
-    device_id: str, module_id: str = None, include_wildcard_suffix: bool = True
+    include_wildcard_suffix: bool = True,
 ) -> str:
     """
     Build a topic string that can be used to subscribe to twin resopnses.  These
@@ -58,10 +60,7 @@ def build_twin_response_subscribe_topic(
 
     :return: The topic used when subscribing for twin resoponse messages.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        topic = build_edge_topic_prefix(device_id, module_id) + "twin/res/"
-    else:
-        topic = "$iothub/twin/res/"
+    topic = "$iothub/twin/res/"
     if include_wildcard_suffix:
         return topic + "#"
     else:
@@ -69,7 +68,7 @@ def build_twin_response_subscribe_topic(
 
 
 def build_twin_patch_desired_subscribe_topic(
-    device_id: str, module_id: str, include_wildcard_suffix: bool = True
+    include_wildcard_suffix: bool = True,
 ) -> str:
     """
     Build a topic string that can be used to subscribe to twin desired property
@@ -82,19 +81,14 @@ def build_twin_patch_desired_subscribe_topic(
 
     :return: The topic string used to subscribe to twin desired property patches.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        topic = build_edge_topic_prefix(device_id, module_id) + "twin/desired/"
-    else:
-        topic = "$iothub/twin/PATCH/properties/desired/"
+    topic = "$iothub/twin/PATCH/properties/desired/"
     if include_wildcard_suffix:
         return topic + "#"
     else:
         return topic
 
 
-def build_twin_patch_reported_publish_topic(
-    device_id: str, module_id: str
-) -> str:
+def build_twin_patch_reported_publish_topic() -> str:
     """
     Build a topic string that can be used to publish a twin reported property patch.  This is a
     "one time" topic which can only be used once since it contains a unique identifier that is used
@@ -113,17 +107,10 @@ def build_twin_patch_reported_publish_topic(
 
     :return: The topic string used when publishing a reported properties patch to the service.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        return (
-            build_edge_topic_prefix(device_id, module_id)
-            + "twin/reported/?$rid="
-            + str(uuid4())
-        )
-    else:
-        return "$iothub/twin/PATCH/properties/reported/?$rid=" + str(uuid4())
+    return "$iothub/twin/PATCH/properties/reported/?$rid=" + str(uuid4())
 
 
-def build_twin_get_publish_topic(device_id: str, module_id: str) -> str:
+def build_twin_get_publish_topic() -> str:
     """
     Build a topic string that can be used to get a device twin from the service.  This is a
     "one time" topic which can only be used once since it contains a unique identifier that is used.
@@ -138,18 +125,11 @@ def build_twin_get_publish_topic(device_id: str, module_id: str) -> str:
 
     :return: The topic string used publish a twin get operation to the service.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        return (
-            build_edge_topic_prefix(device_id, module_id)
-            + "twin/get/?$rid="
-            + str(uuid4())
-        )
-    else:
-        return "$iothub/twin/GET/?$rid=" + str(uuid4())
+    return "$iothub/twin/GET/?$rid=" + str(uuid4())
 
 
 def build_telemetry_publish_topic(
-    device_id: str, module_id: str, message: Message
+    device_id: str = None, module_id: str = None, message: Message = None
 ) -> str:
     """
     Build a topic string that can be used to publish device/module telemetry to the service.  If
@@ -161,15 +141,10 @@ def build_telemetry_publish_topic(
 
     :return: The topic string used publish device/module telemetry to the service.
     """
+    device_id = device_id or default_device_id
+    module_id = module_id or default_module_id
 
-    if constants.EDGEHUB_TOPIC_RULES:
-        topic = (
-            build_edge_topic_prefix(device_id, module_id) + "messages/events/"
-        )
-    else:
-        topic = (
-            build_iothub_topic_prefix(device_id, module_id) + "messages/events/"
-        )
+    topic = build_iothub_topic_prefix(device_id, module_id) + "messages/events/"
 
     if message:
         topic += encode_message_properties_for_topic(message)
@@ -178,7 +153,9 @@ def build_telemetry_publish_topic(
 
 
 def build_c2d_subscribe_topic(
-    device_id: str, module_id: str, include_wildcard_suffix: bool = True
+    device_id: str = None,
+    module_id: str = None,
+    include_wildcard_suffix: bool = True,
 ) -> str:
     """
     Build a topic string that can be used to subscribe to C2D messages for the device or module.
@@ -190,15 +167,13 @@ def build_c2d_subscribe_topic(
 
     :return: The topic string used subscribe to C2D messages.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        topic = (
-            build_edge_topic_prefix(device_id, module_id) + "messages/c2d/post/"
-        )
-    else:
-        topic = (
-            build_iothub_topic_prefix(device_id, module_id)
-            + "messages/devicebound/"
-        )
+    device_id = device_id or default_device_id
+    module_id = module_id or default_module_id
+
+    topic = (
+        build_iothub_topic_prefix(device_id, module_id)
+        + "messages/devicebound/"
+    )
     if include_wildcard_suffix:
         return topic + "#"
     else:
@@ -206,7 +181,7 @@ def build_c2d_subscribe_topic(
 
 
 def build_method_request_subscribe_topic(
-    device_id: str, module_id: str, include_wildcard_suffix: bool = True
+    include_wildcard_suffix: bool = True,
 ) -> str:
     """
     Build a topic string that can be used to subscribe to method requests
@@ -218,10 +193,7 @@ def build_method_request_subscribe_topic(
 
     :return: The topic string used to subscribe to method requests.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
-        topic = build_edge_topic_prefix(device_id, module_id) + "methods/post/"
-    else:
-        topic = "$iothub/methods/POST/"
+    topic = "$iothub/methods/POST/"
 
     if include_wildcard_suffix:
         return topic + "#"
@@ -244,21 +216,10 @@ def build_method_response_publish_topic(
     """
     request_id = topic_parser.extract_request_id(request_topic)
 
-    if constants.EDGEHUB_TOPIC_RULES:
-        device_id = topic_parser.extract_device_id(request_topic)
-        module_id = topic_parser.extract_module_id(request_topic)
-
-        return build_edge_topic_prefix(
-            device_id, module_id
-        ) + "methods/res/{}/?$rid={}".format(
-            urllib.parse.quote(str(status_code), safe=""),
-            urllib.parse.quote(str(request_id), safe=""),
-        )
-    else:
-        return "$iothub/methods/res/{status}/?$rid={request_id}".format(
-            status=urllib.parse.quote(str(status_code), safe=""),
-            request_id=urllib.parse.quote(str(request_id), safe=""),
-        )
+    return "$iothub/methods/res/{status}/?$rid={request_id}".format(
+        status=urllib.parse.quote(str(status_code), safe=""),
+        request_id=urllib.parse.quote(str(request_id), safe=""),
+    )
 
 
 def encode_message_properties_for_topic(message_to_send: Message) -> str:

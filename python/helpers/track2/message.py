@@ -97,7 +97,7 @@ class Message(object):
         else:
             return True
 
-    def get_binary_payload(self) -> bytes:
+    def get_payload(self) -> bytes:
         """
         Get the payload of the message as an array of bytes
 

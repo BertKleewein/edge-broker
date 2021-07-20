@@ -2,6 +2,7 @@
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
 
-from . import track2
+from .edge_auth import EdgeAuth
+from .symmetric_key_auth import SymmetricKeyAuth
 
-__all__ = ["track2"]
+__all__ = ["EdgeAuth", "SymmetricKeyAuth"]

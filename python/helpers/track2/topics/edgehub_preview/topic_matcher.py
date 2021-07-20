@@ -1,7 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for
 # license information.
-from . import topic_parser, topic_builder, constants
+from . import topic_builder, topic_parser
+
+EDGEHUB_TOPIC_RULES = False
 
 
 def is_twin_response(topic: str, request_topic: str) -> bool:
@@ -15,7 +17,7 @@ def is_twin_response(topic: str, request_topic: str) -> bool:
     """
     if request_topic:
         request_id = topic_parser.extract_request_id(request_topic)
-        if constants.EDGEHUB_TOPIC_RULES:
+        if EDGEHUB_TOPIC_RULES:
             device_id = topic_parser.extract_device_id(request_topic)
             module_id = topic_parser.extract_module_id(request_topic)
         else:
@@ -28,7 +30,7 @@ def is_twin_response(topic: str, request_topic: str) -> bool:
             )
         ) and (topic_parser.extract_request_id(topic) == request_id)
     else:
-        if constants.EDGEHUB_TOPIC_RULES:
+        if EDGEHUB_TOPIC_RULES:
             return topic.startswith("$iothub/") and "/twin/res/" in topic
         else:
             return topic.startswith("$iothub/twin/res/")
@@ -42,7 +44,7 @@ def is_twin_patch_desired(topic: str) -> bool:
 
     :returns: True if the topic is a twin desired property patch
     """
-    if constants.EDGEHUB_TOPIC_RULES:
+    if EDGEHUB_TOPIC_RULES:
         return topic.startswith("$iothub/") and "/twin/desired/" in topic
     else:
         return topic.startswith("$iothub/twin/PATCH/properties/desired/")
@@ -56,7 +58,7 @@ def is_c2d(topic: str) -> bool:
 
     :returns: True if the topic is a c2d message.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
+    if EDGEHUB_TOPIC_RULES:
         return topic.startswith("$iothub/") and "/messages/c2d/post/" in topic
     else:
         return (
@@ -72,7 +74,7 @@ def is_method_request(topic: str, method_name: str = None) -> bool:
 
     :returns: True if the topic is for a method request.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
+    if EDGEHUB_TOPIC_RULES:
         is_method = topic.startswith("$iothub/") and "/methods/post/" in topic
     else:
         is_method = topic.startswith("$iothub/methods/POST")
@@ -92,7 +94,7 @@ def sent_to_device(topic: str, device_id: str) -> bool:
 
     :returns: True if the topic was sent to this specific device.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
+    if EDGEHUB_TOPIC_RULES:
         return topic.startswith(
             topic_builder.build_edge_topic_prefix(device_id, None)
         )
@@ -117,7 +119,7 @@ def sent_to_module(topic: str, device_id: str, module_id: str) -> bool:
 
     :returns: True if the topic was sent to this specific module.
     """
-    if constants.EDGEHUB_TOPIC_RULES:
+    if EDGEHUB_TOPIC_RULES:
         return topic.startswith(
             topic_builder.build_edge_topic_prefix(device_id, module_id)
         )

@@ -7,11 +7,12 @@ import threading
 import time
 import logging
 from typing import Callable
-from . import sas_token, constants
+from . import sas_token
+from ... import constants
 
 logger = logging.getLogger(__name__)
 
-sas_token_renewed_handler = Callable[[], None]
+new_password_generated_handler = Callable[[], None]
 
 # TODO: what about websockets?  Does port belong here?  Transport?  if not here, where?
 
@@ -43,12 +44,12 @@ class AuthorizationBase(abc.ABC):
     """
 
     def __init__(self) -> None:
-        self.hostname: str = None
         self.device_id: str = None
         self.module_id: str = None
         self.port: int = 8883
-        self.api_version: str = constants.IOTHUB_API_VERSION
+        self.api_version = ""
         self.gateway_host_name: str = None
+        self.hub_host_name: str = None
 
     @property
     @abc.abstractmethod
@@ -63,11 +64,14 @@ class AuthorizationBase(abc.ABC):
         # TODO: add product_info stuff
         if self.module_id:
             return "{}/{}/{}/?api-version={}".format(
-                self.hostname, self.device_id, self.module_id, self.api_version
+                self.hub_host_name,
+                self.device_id,
+                self.module_id,
+                self.api_version,
             )
         else:
             return "{}/{}/?api-version={}".format(
-                self.hostname, self.device_id, self.api_version
+                self.hub_host_name, self.device_id, self.api_version
             )
 
     @property
@@ -79,6 +83,13 @@ class AuthorizationBase(abc.ABC):
             return "{}/{}".format(self.device_id, self.module_id)
         else:
             return self.device_id
+
+    @property
+    def hostname(self) -> str:
+        if self.gateway_host_name:
+            return self.gateway_host_name
+        else:
+            return self.hub_host_name
 
 
 class RenewableTokenAuthorizationBase(AuthorizationBase):
@@ -94,8 +105,8 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
 
         self.server_verification_cert: str = None
         self.sas_token: sas_token.RenewableSasToken = None
-        self.sas_token_renewal_timer: threading.Timer = None
-        self.on_sas_token_renewed: sas_token_renewed_handler = None
+        self.password_renewal_timer: threading.Timer = None
+        self.on_new_password_generated: new_password_generated_handler = None
 
     @property
     def password(self) -> str:
@@ -109,98 +120,98 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
         """
         The URI which is being signed to create the SAS token
         """
-        return format_sas_uri(self.hostname, self.device_id, self.module_id)
+        return format_sas_uri(
+            self.hub_host_name, self.device_id, self.module_id
+        )
 
     @property
-    def sas_token_expiry_time(self) -> int:
+    def password_expiry_time(self) -> int:
         """
         The Unix epoch time when the SAS token expires.
         """
         return self.sas_token.expiry_time
 
     @property
-    def sas_token_renewal_time(self) -> int:
+    def password_renewal_time(self) -> int:
         """
         The Unix epoch time when the SAS token should be renewed.  This is typically
         some amount of time before the token expires.  That amount of time is known
         as the "token renewal margin"
         """
         return (
-            self.sas_token.expiry_time - constants.DEFAULT_TOKEN_RENEWAL_MARGIN
+            self.sas_token.expiry_time
+            - constants.DEFAULT_PASSWORD_RENEWAL_MARGIN
         )
 
     @property
-    def sas_token_ready_to_renew(self) -> bool:
+    def password_ready_to_renew(self) -> bool:
         """
         True if the current token is "ready to renew", meaning the current time is
         after the token's renewal time.
         """
-        return time.time() > self.sas_token_renewal_time
+        return time.time() > self.password_renewal_time
 
     @property
-    def seconds_until_sas_token_renewal(self) -> int:
+    def seconds_until_password_renewal(self) -> int:
         """
         Number of seconds before the current SAS token needs to be removed.
         """
-        return max(0, self.sas_token_renewal_time - int(time.time()))
+        return max(0, self.password_renewal_time - int(time.time()))
 
-    def cancel_sas_token_renewal_timer(self) -> None:
+    def cancel_password_renewal_timer(self) -> None:
         """
         Cancel the running timer which is set to fire when the current SAS token
         needs to be renewed.
         """
-        if self.sas_token_renewal_timer:
-            self.sas_token_renewal_timer.cancel()
-            self.sas_token_renewal_timer = None
+        if self.password_renewal_timer:
+            self.password_renewal_timer.cancel()
+            self.password_renewal_timer = None
 
-    def set_sas_token_renewal_timer(
-        self, on_sas_token_renewed: sas_token_renewed_handler = None
+    def set_password_renewal_timer(
+        self, on_new_password_generated: new_password_generated_handler = None
     ) -> None:
         """
         Set a timer which renews the current SAS token before it expires and calls
         the supplied handler after the renewal is complete.  The supplied handler
         is responsible for re-authorizing using the new SAS token and setting up a new
-        timer by calling `set_sas_token_renewal_timer` again.
+        timer by calling `set_password_renewal_timer` again.
 
-        :param function on_sas_token_renewed: Handler function which gets called after
+        :param function on_new_password_generated: Handler function which gets called after
             the token is renewed.  This function is responsible for calling
-            `set_sas_token_renewal_timer` in order to schedule subsequent renewals.
+            `set_password_renewal_timer` in order to schedule subsequent renewals.
         """
 
         # If there is an old renewal timer, cancel it
-        self.cancel_sas_token_renewal_timer()
-        self.on_sas_token_renewed = on_sas_token_renewed
+        self.cancel_password_renewal_timer()
+        self.on_new_password_generated = on_new_password_generated
 
         # Set a new timer.
-        seconds_until_renewal = self.seconds_until_sas_token_renewal
-        self.sas_token_renewal_timer = threading.Timer(
-            seconds_until_renewal, self.renew_sas_token
+        seconds_until_renewal = self.seconds_until_password_renewal
+        self.password_renewal_timer = threading.Timer(
+            seconds_until_renewal, self.renew_and_reconnect
         )
-        self.sas_token_renewal_timer.daemon = True
-        self.sas_token_renewal_timer.start()
+        self.password_renewal_timer.daemon = True
+        self.password_renewal_timer.start()
 
         logger.info(
             "SAS token renewal timer set for {} seconds in the future, at approximately {}".format(
-                seconds_until_renewal, self.sas_token_expiry_time
+                seconds_until_renewal, self.password_expiry_time
             )
         )
 
-    def renew_sas_token(self) -> None:
+    def renew_and_reconnect(self) -> None:
         """
         Renew authorization. This  causes a new password string to be generated and the
-            `on_sas_token_renewed` function to be called.
+            `on_new_password_generated` function to be called.
         """
         logger.info("Renewing sas token and reconnecting")
 
-        # Cancel any timers that might be running.
-        self.cancel_sas_token_renewal_timer()
+        self.cancel_password_renewal_timer()
 
-        # Calculate the new token value
         self.sas_token.refresh()
 
-        # notify
-        if self.on_sas_token_renewed:
-            self.on_sas_token_renewed()
+        if self.on_new_password_generated:
+            self.on_new_password_generated()
 
     def create_tls_context(self) -> ssl.SSLContext:
         """

@@ -44,7 +44,7 @@ class EdgeWorkloadApi:
         :param str generation_id: The module generation id
         :param str workload_uri: The workload uri
         """
-        self.module_id = urllib.parse.quote(module_id, safe="")  # type: ignore
+        self.module_id = urllib.parse.quote(module_id, safe="")
         self.api_version = api_version
         self.generation_id = generation_id
         self.workload_uri = _format_socket_uri(workload_uri)
@@ -156,9 +156,7 @@ def _format_socket_uri(old_uri: str) -> str:
         stripped_uri = old_uri[len(old_prefix) :]
         if stripped_uri.endswith("/"):
             stripped_uri = stripped_uri[:-1]
-        new_uri = new_prefix + urllib.parse.quote(  # type: ignore
-            stripped_uri, safe=""
-        )
+        new_uri = new_prefix + urllib.parse.quote(stripped_uri, safe="")
     else:
         new_uri = old_uri
 
