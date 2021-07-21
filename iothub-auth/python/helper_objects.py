@@ -207,7 +207,7 @@ class ConnectionStatus(object):
                 self._disconnected_error = disconnected_error
                 self.cv.notify_all()
 
-    def wait_for_connected(self, timeout: float = None) -> None:
+    def wait_for_connected(self, timeout: float = None) -> bool:
         with self.cv:
             self.cv.wait_for(
                 lambda: self._connected or self._disconnected_error,
@@ -215,6 +215,7 @@ class ConnectionStatus(object):
             )
             if self._disconnected_error:
                 raise self._disconnected_error
+            return self.connected
 
     def wait_for_disconnected(self, timeout: float = None) -> None:
         with self.cv:
