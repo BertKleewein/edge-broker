@@ -34,7 +34,7 @@ class AuthorizationBase(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def password(self) -> str:
+    def password(self) -> bytes:
         pass
 
     @property
@@ -100,7 +100,7 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
         self.password_creation_time = 0
         self.password_expiry_time = 0
         self.shared_access_key_name = None
-        self._password = None
+        self._password: bytes = None
         self.signing_mechanism: Any = None
 
     def add_username_props(self, props: Dict[str, Any]) -> None:
@@ -111,7 +111,7 @@ class RenewableTokenAuthorizationBase(AuthorizationBase):
             props["sp"] = self.shared_access_key_name
 
     @property
-    def password(self) -> str:
+    def password(self) -> bytes:
         """
         Value to be sent in the MQTT `password` field.
         """

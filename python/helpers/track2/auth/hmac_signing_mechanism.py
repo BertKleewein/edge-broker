@@ -35,7 +35,7 @@ class HmacSigningMechanism:
             # NOTE: TypeError can only be raised in Python 2.7
             raise ValueError("Invalid Symmetric Key")
 
-    def sign(self, data_str: str) -> str:
+    def sign(self, data_str: str) -> bytes:
         """
         Sign a data string with symmetric key and the HMAC-SHA256 algorithm.
 
@@ -63,4 +63,4 @@ class HmacSigningMechanism:
                 "Unable to sign string using the provided symmetric key"
             )
         # Convert from bytes to string
-        return signed_data.decode("utf-8")
+        return hmac_digest
