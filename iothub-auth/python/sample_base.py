@@ -77,11 +77,15 @@ class SampleAppBase(object):
         print("received message on {}".format(message.topic))
         self.incoming_messages.add_item(message)
 
-    def init(self, connection_string: str) -> None:
+    def create_mqtt_client(
+        self, connection_string: str, clean_session: bool = False
+    ) -> None:
         self.auth = SymmetricKeyAuth.create_from_connection_string(
             connection_string
         )
-        self.mqtt_client = mqtt.Client(self.auth.client_id)
+        self.mqtt_client = mqtt.Client(
+            self.auth.client_id, clean_session=clean_session
+        )
         self.mqtt_client.enable_logger()
         self.mqtt_client.username_pw_set(self.auth.username, self.auth.password)
         self.mqtt_client.tls_set_context(self.auth.create_tls_context())

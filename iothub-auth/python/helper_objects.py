@@ -50,7 +50,7 @@ class IncomingAckList(object):
                     return self.lookup.pop(key)
                 except KeyError:
                     # possible multiple readers.  Not really a big deal.
-                    logger.error(
+                    logger.warning(
                         "{} was removed from lookup list between notification and retrieval.".format(
                             key
                         )
