@@ -10,7 +10,6 @@ import hmac
 import hashlib
 import base64
 from typing import Any, Callable, Union, Dict
-import connection_string as cs
 from six.moves import urllib
 
 logger = logging.getLogger(__name__)
@@ -81,7 +80,7 @@ class SymmetricKeyAuth(abc.ABC):
             sas_at=self.password_creation_time * 1000,
             sas_expiry=self.password_expiry_time * 1000,
         )
-        return sign_password(ss, self.shared_access_key)
+        return sign_password(self.shared_access_key, ss)
 
     @property
     def username(self) -> str:
@@ -179,13 +178,14 @@ class SymmetricKeyAuth(abc.ABC):
         """
         Helper function to initialize a newly created auth object.
         """
-        conn_str = cs.ConnectionString(connection_string)
+        cs_args = connection_string.split(";")
+        cs_dict = dict(arg.split("=", 1) for arg in cs_args)  # type: ignore
 
-        self.hub_host_name = conn_str[cs.HOST_NAME]
-        self.device_id = conn_str[cs.DEVICE_ID]
-        self.module_id = conn_str.get(cs.MODULE_ID, None)
-        self.gateway_host_name = conn_str.get(cs.GATEWAY_HOST_NAME, None)
-        self.shared_access_key = conn_str[cs.SHARED_ACCESS_KEY]
+        self.hub_host_name = cs_dict["HostName"]
+        self.device_id = cs_dict["DeviceId"]
+        self.module_id = cs_dict.get("ModuleId", None)
+        self.gateway_host_name = cs_dict.get("GatewayHostName", None)
+        self.shared_access_key = cs_dict["SharedAccessKey"]
 
         self.update_expiry()
 

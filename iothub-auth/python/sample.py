@@ -21,7 +21,7 @@ logging.getLogger("paho").setLevel(level=logging.DEBUG)
 
 class SampleApp(SampleAppBase):
     def __init__(self) -> None:
-        super(SampleAppBase, self).__init__()
+        super(SampleApp, self).__init__()
 
     def sample_connect_and_disconenct(self) -> None:
         """
@@ -34,7 +34,7 @@ class SampleApp(SampleAppBase):
         self.start_connect()
 
         print("Waiting for CONNACK")
-        if self.connection_status.wait_for_connected(timeout=20):
+        if not self.connection_status.wait_for_connected(timeout=20):
             print("failed to connect.  exiting")
             sys.exit(1)
 
@@ -55,7 +55,7 @@ class SampleApp(SampleAppBase):
         self.start_connect()
 
         print("Waiting for CONNACK")
-        if self.connection_status.wait_for_connected(timeout=20):
+        if not self.connection_status.wait_for_connected(timeout=20):
             print("failed to connect.  exiting")
             sys.exit(1)
 
@@ -71,7 +71,7 @@ class SampleApp(SampleAppBase):
 
         print("Connecting")
         self.start_connect()
-        if self.connection_status.wait_for_connected(timeout=20):
+        if not self.connection_status.wait_for_connected(timeout=20):
             sys.exit(1)
 
         topic = "/vehicles/V1/GPS"
@@ -101,7 +101,7 @@ class SampleApp(SampleAppBase):
 
         print("Connecting")
         self.start_connect()
-        if self.connection_status.wait_for_connected(timeout=20):
+        if not self.connection_status.wait_for_connected(timeout=20):
             sys.exit(1)
 
         topic = "/vehicles/V1/GPS"
@@ -136,7 +136,7 @@ class SampleApp(SampleAppBase):
 
         print("Connecting")
         self.start_connect()
-        if self.connection_status.wait_for_connected(timeout=20):
+        if not self.connection_status.wait_for_connected(timeout=20):
             sys.exit(1)
 
         topic_filter = "/vehicles/+/GPS/#"
@@ -166,7 +166,7 @@ class SampleApp(SampleAppBase):
 
         print("Connecting")
         self.start_connect()
-        if self.connection_status.wait_for_connected(timeout=20):
+        if not self.connection_status.wait_for_connected(timeout=20):
             sys.exit(1)
 
         topic_filter = "/vehicles/+/GPS/#"
