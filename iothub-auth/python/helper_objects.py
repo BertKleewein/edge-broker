@@ -17,7 +17,7 @@ class IncomingAckList(object):
     These "wait" operations are done in a thread-safe manner using the `Condition` class
     provided by the `threading` module.
 
-    Callers using `asyncio` instead of `threading` should consider writing an awaitable version
+    Callers using `async3yyio` instead of `threading` should consider writing an awaitable version
     of this class using the `asyncio.Condition` class for synchronization.  Submitting a pull
     request with this functionality is encouraged.
     """
@@ -172,13 +172,26 @@ class IncomingMessageList(object):
 
 
 class ConnectionStatus(object):
+    """
+    Connection status object which can be used to know if the transport is connected or not
+    and if there was a connection errror.  This object is also waitable, so users can  call
+    wait_for_connected or wait_for_disconnected functions to wait for the specific states.
+
+    Callers using `asyncio` instead of `threading` should consider writing an awaitable version
+    of this class using the `asyncio.Condition` class for synchronization.  Submitting a pull
+    request with this functionality is encouraged.
+    """
+
     def __init__(self) -> None:
         self.cv = threading.Condition()
         self._connected = False
-        self._disconnected_error: Exception = None
+        self._connection_error: Exception = None
 
     @property
     def connected(self) -> bool:
+        """
+        Returns True if the client is currently connected.
+        """
         with self.cv:
             return self._connected
 
@@ -191,32 +204,45 @@ class ConnectionStatus(object):
                 self.cv.notify_all()
 
     @property
-    def disconnected_error(self) -> Exception:
+    def connection_error(self) -> Exception:
+        """
+        Returns any connection errors that have recently happened.  This gets reset when
+        setting the `connected` property.
+        """
         with self.cv:
-            return self.disconnected_error
+            return self.connection_error
 
-    @disconnected_error.setter
-    def disconnected_error(self, disconnected_error: Exception) -> None:
-        if not disconnected_error:
+    @connection_error.setter
+    def connection_error(self, connection_error: Exception) -> None:
+        if not connection_error:
             raise ValueError(
-                "disconnected_error must be truthy.  Set connected flag to clear disconnected_error property"
+                "`connection_error` must be truthy.  Set `connected` property to clear `connection_error` property"
             )
         with self.cv:
-            if self._connected or not self._disconnected_error:
+            if self._connected or not self._connection_error:
                 self._connected = False
-                self._disconnected_error = disconnected_error
+                self._connection_error = connection_error
                 self.cv.notify_all()
 
     def wait_for_connected(self, timeout: float = None) -> bool:
+        """
+        Wait for the transport to enter the connected state.
+        Returns immediately if the transport is already connected.
+        Raises any connection errors that happen while waiting.
+        """
         with self.cv:
             self.cv.wait_for(
-                lambda: self._connected or self._disconnected_error,
+                lambda: self._connected or self._connection_error,
                 timeout=timeout,
             )
-            if self._disconnected_error:
-                raise self._disconnected_error
+            if self._connection_error:
+                raise self._connection_error
             return self.connected
 
     def wait_for_disconnected(self, timeout: float = None) -> None:
+        """
+        Wait for the transport to enter the disconnected state.
+        Returns imediately if the transport is already disconnected.
+        """
         with self.cv:
             self.cv.wait_for(lambda: not self._connected, timeout=timeout)

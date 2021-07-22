@@ -70,8 +70,10 @@ class SymmetricKeyAuth(abc.ABC):
         self.shared_access_key_name = None
 
     @property
-    @abc.abstractmethod
     def password(self) -> bytes:
+        """
+        The password to pass in the body of MQTT CONNECT packet.
+        """
         ss = "{host_name}\n{identity}\n{sas_policy}\n{sas_at}\n{sas_expiry}\n".format(
             host_name=self.hub_host_name,
             identity=self.client_id,
@@ -121,6 +123,10 @@ class SymmetricKeyAuth(abc.ABC):
             return self.device_id
 
     def update_expiry(self) -> None:
+        """
+        Update the expiry of for the generated password.  This causes the values returned for
+        the `username` and `password` properties to be updated.
+        """
         self.password_creation_time = int(time.time())
         self.password_expiry_time = int(
             self.password_creation_time + DEFAULT_PASSWORD_RENEWAL_INTERVAL
@@ -128,6 +134,10 @@ class SymmetricKeyAuth(abc.ABC):
 
     @property
     def hostname(self) -> str:
+        """
+        host to connect to.  This may be the name of the IoTHub instance, or, in the case of a
+        gateway, it may be the name of the gateway intance.
+        """
         if self.gateway_host_name:
             return self.gateway_host_name
         else:
@@ -181,6 +191,10 @@ class SymmetricKeyAuth(abc.ABC):
 
 
 class PasswordRenewalTimer(object):
+    """
+    Helper object used to set up automatic password renewal timers and events.
+    """
+
     def __init__(self, auth: SymmetricKeyAuth) -> None:
         self.auth = auth
         self.password_renewal_timer: threading.Timer = None
