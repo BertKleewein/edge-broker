@@ -6,6 +6,7 @@ import sys
 import logging
 import json
 import time
+import argparse
 from sample_base import SampleAppBase
 from paho.mqtt import client as mqtt
 
@@ -74,7 +75,7 @@ class SampleApp(SampleAppBase):
         if not self.connection_status.wait_for_connected(timeout=20):
             sys.exit(1)
 
-        topic = "/vehicles/V1/GPS"
+        topic = "/vehicles/V1/GPS/pos/"
         payload = {
             "latitude": 47.63962283908785,
             "longitude": -122.12718926895407,
@@ -104,7 +105,7 @@ class SampleApp(SampleAppBase):
         if not self.connection_status.wait_for_connected(timeout=20):
             sys.exit(1)
 
-        topic = "/vehicles/V1/GPS"
+        topic = "/vehicles/V1/GPS/pos/"
         payload = {
             "latitude": 47.63962283908785,
             "longitude": -122.12718926895407,
@@ -182,7 +183,7 @@ class SampleApp(SampleAppBase):
             self.connection_status.wait_for_disconnected()
             return
 
-        time_to_listen = 120
+        time_to_listen = 6000
         end_time = time.time() + time_to_listen
 
         while time.time() <= end_time:
@@ -225,8 +226,27 @@ class SampleApp(SampleAppBase):
 
     def main(self) -> None:
         # Call any of the sample_* functions here
-        self.sample_receive_messages()
+        # self.sample_receive_messages()
+        self.sample_publish_with_qos_1()
 
+
+samples = [
+    "sample_connect_and_disconenct",
+    "sample_connect_and_disconnect_clean_session",
+    "sample_publish_with_qos_0",
+    "sample_publish_with_qos_1",
+    "sample_subscribe",
+    "sample_receive_messages",
+]
 
 if __name__ == "__main__":
-    SampleApp().main()
+    parser = argparse.ArgumentParser(prog="sample")
+    parser.add_argument(
+        "sample", type=str, help="Sample to run", choices=list(samples)
+    )
+
+    args = parser.parse_args()
+
+    app = SampleApp()
+    sample_function = getattr(app, args.sample)
+    sample_function()
