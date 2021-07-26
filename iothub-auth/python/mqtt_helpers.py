@@ -26,7 +26,7 @@ class IncomingAckList(object):
         self.cv = threading.Condition()
         self.lookup: Dict[int, Any] = {}
 
-    def add_item(self, key: int, value: Any) -> None:
+    def add_ack(self, key: int, value: Any) -> None:
         """
         Add the ack to the dict and notify any waiting listeners
         """
@@ -34,7 +34,7 @@ class IncomingAckList(object):
             self.lookup[key] = value
             self.cv.notify_all()
 
-    def wait_for_item(self, key: int, timeout: float) -> Any:
+    def wait_for_ack(self, key: int, timeout: float) -> Any:
         """
         Wait for a given ack to be added to the dict.
         """
@@ -88,7 +88,7 @@ class IncomingMessageList(object):
         self.messages: List[Any] = []
         self.cv = threading.Condition()
 
-    def add_item(self, message: Any) -> None:
+    def add_message(self, message: Any) -> None:
         """
         Add a message to the message list and notify any listeners which might be
         waiting for this message.

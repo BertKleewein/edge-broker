@@ -4,24 +4,40 @@
 import logging
 from paho.mqtt import client as mqtt
 from symmetric_key_auth import SymmetricKeyAuth
-from helper_objects import (
-    IncomingMessageList,
-    IncomingAckList,
-    ConnectionStatus,
-)
-from typing import Any
+from mqtt_helpers import IncomingMessageList, IncomingAckList, ConnectionStatus
+from typing import Any, Tuple
 
 logger = logging.getLogger(__name__)
 
 
-class SampleAppBase(object):
-    def __init__(self) -> None:
+class PahoClient(object):
+    def __init__(self, auth: SymmetricKeyAuth) -> None:
         self.mqtt_client: mqtt.Client = None
-        self.auth: SymmetricKeyAuth = None
+        self.auth: SymmetricKeyAuth = auth
         self.connection_status = ConnectionStatus()
         self.incoming_subacks = IncomingAckList()
+        self.incoming_unsubacks = IncomingAckList()
         self.incoming_pubacks = IncomingAckList()
         self.incoming_messages = IncomingMessageList()
+
+    @classmethod
+    def error_string(cls, mqtt_errno: int) -> str:
+        return mqtt.error_string(mqtt_errno)  # type: ignore
+
+    @classmethod
+    def create_from_auth(
+        cls, auth: SymmetricKeyAuth, clean_session: bool = False
+    ) -> Any:
+        obj = cls(auth)
+        obj.create_mqtt_client(clean_session)
+        return obj
+
+    @classmethod
+    def create_from_connection_string(
+        cls, connection_string: str, clean_session: bool = False
+    ) -> Any:
+        auth = SymmetricKeyAuth.create_from_connection_string(connection_string)
+        return cls.create_from_auth(auth, clean_session)
 
     def _handle_on_connect(
         self, mqtt_client: mqtt.Client, userdata: Any, flags: Any, rc: int
@@ -74,8 +90,19 @@ class SampleAppBase(object):
         """
         # In Paho thread.  Save what we need and return.
         logger.info("Received SUBACK for mid {}".format(mid))
-        # causes code waiting for this mid via `self.incoming_subacks.wait_for_item` to return
-        self.incoming_subacks.add_item(mid, granted_qos)
+        # causes code waiting for this mid via `self.incoming_subacks.wait_for_ack` to return
+        self.incoming_subacks.add_ack(mid, granted_qos)
+
+    def _handle_on_unsubscribe(
+        self, client: mqtt.Client, userdata: Any, mid: int
+    ) -> None:
+        """
+        event handler for Paho on_unsubscribe events.  Do not call directly.
+        """
+        # In Paho thread.  Save what we need and return.
+        logger.info("Received UNSUBACK for mid {}".format(mid))
+        # causes code waiting for this mid via `self.incoming_unsubacks.wait_for_ack` to return
+        self.incoming_unsubacks.add_ack(mid, mid)
 
     def _handle_on_publish(
         self, client: mqtt.Client, userdata: Any, mid: int
@@ -85,8 +112,8 @@ class SampleAppBase(object):
         """
         # In Paho thread.  Save what we need and return.
         logger.info("Received PUBACK for mid {}".format(mid))
-        # causes code waiting for this mid via `self.incoming_pubacks.wait_for_item` to return
-        self.incoming_pubacks.add_item(mid, mid)
+        # causes code waiting for this mid via `self.incoming_pubacks.wait_for_ack` to return
+        self.incoming_pubacks.add_ack(mid, mid)
 
     def _handle_on_message(
         self, mqtt_client: mqtt.Client, userdata: Any, message: mqtt.MQTTMessage
@@ -98,18 +125,13 @@ class SampleAppBase(object):
         print("received message on {}".format(message.topic))
         # causes code waiting for messages via `self.incoming_messages.wait_for_message` and
         # `self.incoming_messages.pop_next_message` to return.
-        self.incoming_messages.add_item(message)
+        self.incoming_messages.add_message(message)
 
-    def create_mqtt_client(
-        self, connection_string: str, clean_session: bool = False
-    ) -> None:
+    def create_mqtt_client(self, clean_session: bool = False) -> None:
         """
         Create a Paho MQTT client object to use for communicating
         with the server and store it in `self.mqtt_client`.
         """
-        self.auth = SymmetricKeyAuth.create_from_connection_string(
-            connection_string
-        )
         self.mqtt_client = mqtt.Client(
             self.auth.client_id, clean_session=clean_session
         )
@@ -139,3 +161,20 @@ class SampleAppBase(object):
         set to `False`.
         """
         self.mqtt_client.disconnect()
+
+    def publish(
+        self,
+        topic: str,
+        payload: Any = None,
+        qos: int = 0,
+        retain: bool = False,
+    ) -> Tuple[int, int]:
+        return self.mqtt_client.publish(  # type: ignore
+            topic, payload, qos, retain
+        )
+
+    def subscribe(self, topic: str, qos: int = 0) -> Tuple[int, int]:
+        return self.mqtt_client.subscribe(topic, qos)  # type: ignore
+
+    def unsubscribe(self, topic: str) -> Tuple[int, int]:
+        return self.mqtt_client.unsubscribe(topic)  # type: ignore
