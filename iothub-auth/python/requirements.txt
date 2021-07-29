@@ -1,0 +1,4 @@
+paho-mqtt
+six
+typing-extensions; python_version <= '3.7' 
+
