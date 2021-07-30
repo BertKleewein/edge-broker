@@ -27,7 +27,7 @@ class SampleApp(object):
         Demonstrates how to send iothub telemetry
         """
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"]
         )
 
         print("Starting connection")

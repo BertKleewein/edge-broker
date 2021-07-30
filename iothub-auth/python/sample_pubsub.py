@@ -32,7 +32,7 @@ class SampleApp(object):
         """
 
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"]
         )
 
         print("Starting connection")
@@ -53,7 +53,7 @@ class SampleApp(object):
         """
 
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"], clean_session=True
         )
 
         print("Starting connection")
@@ -73,7 +73,7 @@ class SampleApp(object):
         Demonstrates how to publish at QOS 0
         """
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"]
         )
 
         print("Connecting")
@@ -102,7 +102,7 @@ class SampleApp(object):
         Demonstrates how to publish at QOS 1
         """
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"]
         )
 
         print("Connecting")
@@ -140,7 +140,7 @@ class SampleApp(object):
         Demonstrates how to subscribe to a topic and receive messages on that topic
         """
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"], clean_session=True
         )
 
         print("Connecting")
@@ -171,7 +171,7 @@ class SampleApp(object):
         Demonstrates how to receive messages on a topic
         """
         client = PahoClient.create_from_connection_string(
-            os.environ["IOTHUB_CONNECTION_STRING"]
+            os.environ["IOTHUB_DEVICE_CONNECTION_STRING"], clean_session=True
         )
 
         print("Connecting")
